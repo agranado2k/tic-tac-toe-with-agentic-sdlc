@@ -44,4 +44,5 @@ was never decided". If one grows consequential enough, promote it to an ADR and
 leave a back-reference in the diary entry.
 -->
 
+- **2026-08-29** — Ctrl-C ends the run from the Shell: `CLI.run` rescues `Interrupt` once at its outer edge and exits with status 130; `bin/tic-tac-toe` stays a one-line call and the core is untouched (ADR-0001's split unchanged). Recorded in the diary entry "Ctrl-C quits quietly"; open question on PR #13 whether the `exit` should move to the binary.
 - **2026-08-29** — Mutation testing with `mutant-rspec`, run on demand and never as a gate (shared invariant §9). Free for open source (`usage: opensource` in `.mutant.yml`); the repo is public. Recorded in the diary entry of that date.
