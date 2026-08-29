@@ -22,7 +22,10 @@ module TicTacToe
 
       until game.outcome.terminal?
         out.puts UI::Renderer.render(game.board, status: status)
-        game, status = advance(game, prompt.keypress)
+        key = prompt.keypress
+        break if key.nil? # the input stream is closed: leave rather than re-ask forever
+
+        game, status = advance(game, key)
       end
 
       out.puts UI::Renderer.render(game.board, status: UI::Renderer.announcement(game.outcome))
@@ -37,8 +40,17 @@ module TicTacToe
 
       game.play(cell).either(
         ->(played) { [played, UI::Renderer.to_move(played.current_mark)] },
-        ->(_reason) { [game, UI::Renderer.occupied(cell)] }
+        ->(reason) { [game, refusal(game, cell, reason)] }
       )
+    end
+
+    # The status line for a refused Move, by the reason the Game gave.
+    def self.refusal(game, cell, reason)
+      case reason
+      when :occupied then UI::Renderer.occupied(cell)
+      when :game_over then UI::Renderer.announcement(game.outcome)
+      else UI::Renderer::NOT_A_CELL # :out_of_bounds — the key named no Cell
+      end
     end
   end
 end

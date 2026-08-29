@@ -37,8 +37,7 @@ RSpec.describe TicTacToe::CLI do
 
       expect(prompt).to have_received(:keypress).exactly(6).times
       expect(out.string).to include(
-        TicTacToe::UI::Renderer.render(TicTacToe::Game.new_game.play(4).value!.board,
-                                       status: TicTacToe::UI::Renderer.occupied(4))
+        TicTacToe::UI::Renderer.render(game_after(4).board, status: TicTacToe::UI::Renderer.occupied(4))
       )
     end
 
@@ -49,18 +48,6 @@ RSpec.describe TicTacToe::CLI do
 
       expect(out.string.scan(/[XO] to move/)).to eq(["X to move", "O to move", "X to move",
                                                      "O to move", "X to move"])
-    end
-
-    it "ends a scripted X win with the announcement in the status line" do
-      script(*%w[1 4 2 5 3])
-
-      game = described_class.run(prompt: prompt, out: out)
-
-      expect(prompt).to have_received(:keypress).exactly(5).times
-      expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
-      expect(out.string).to end_with(
-        TicTacToe::UI::Renderer.render(game.board, status: "X wins")
-      )
     end
 
     it "ends a scripted O win with the announcement in the status line" do
@@ -85,18 +72,29 @@ RSpec.describe TicTacToe::CLI do
       )
     end
 
-    it "renders one frame per keypress and one for the announcement" do
-      script(*%w[1 4 2 5 3])
+    it "plays a scripted X win in five keypresses, one frame each plus the announcement" do
+      keys = %w[1 4 2 5 3]
+      script(*keys)
 
-      described_class.run(prompt: prompt, out: out)
+      game = described_class.run(prompt: prompt, out: out)
 
-      frames = (0..4).map do |n|
-        game = %w[1 4 2 5 3].first(n).reduce(TicTacToe::Game.new_game) { |g, k| g.play(k.to_i - 1).value! }
-        TicTacToe::UI::Renderer.render(game.board, status: TicTacToe::UI::Renderer.to_move(game.current_mark))
+      games = (0..keys.size).map { |n| game_after(*keys.first(n).map { |k| k.to_i - 1 }) }
+      frames = games[0...-1].map do |g|
+        TicTacToe::UI::Renderer.render(g.board, status: TicTacToe::UI::Renderer.to_move(g.current_mark))
       end
-      won = [0, 3, 1, 4, 2].reduce(TicTacToe::Game.new_game) { |g, c| g.play(c).value! }
+      expect(prompt).to have_received(:keypress).exactly(5).times
+      expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
+      expect(out.string).to eq(frames.join + TicTacToe::UI::Renderer.render(games.last.board, status: "X wins"))
+    end
 
-      expect(out.string).to eq(frames.join + TicTacToe::UI::Renderer.render(won.board, status: "X wins"))
+    it "leaves when the input stream is closed instead of re-asking forever" do
+      script("5", nil)
+
+      game = described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).to have_received(:keypress).exactly(2).times
+      expect(game).to eq(game_after(4))
+      expect(game.outcome).not_to be_terminal
     end
 
     it "builds its own prompt and writes to $stdout when given neither" do
@@ -104,6 +102,38 @@ RSpec.describe TicTacToe::CLI do
       script(*%w[1 4 2 5 3])
 
       expect { described_class.run }.to output(/X wins/).to_stdout
+    end
+  end
+
+  describe ".advance" do
+    let(:won) { game_after(0, 3, 1, 4, 2) }
+
+    it "plays the Cell the key names and says who is to move next" do
+      game, status = described_class.advance(TicTacToe::Game.new_game, "5")
+
+      expect(game).to eq(game_after(4))
+      expect(status).to eq("O to move")
+    end
+
+    it "refuses a key that is not a Cell, leaving the Game untouched" do
+      game, status = described_class.advance(TicTacToe::Game.new_game, "q")
+
+      expect(game).to eq(TicTacToe::Game.new_game)
+      expect(status).to eq(TicTacToe::UI::Renderer::NOT_A_CELL)
+    end
+
+    it "refuses a taken Cell, naming it" do
+      game, status = described_class.advance(game_after(4), "5")
+
+      expect(game).to eq(game_after(4))
+      expect(status).to eq("Cell 5 is taken")
+    end
+
+    it "refuses a Move on a finished Game with the announcement, not a taken-Cell message" do
+      game, status = described_class.advance(won, "9")
+
+      expect(game).to eq(won)
+      expect(status).to eq("X wins")
     end
   end
 end
