@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | Hot seat complete as a product slice: one Frame repainted in place, number keys, Status line, Replay, and Ctrl-C leaving quietly. Next: #7 (versus computer, random), then #8 (minimax); `/dogfood` against the personas in `constitution/local-product.md` once the game is what PRD #2 describes. |
+| **Phase** | Versus-computer in flight on `feat/versus-computer` (#7): a Mode question before the first Frame, a Random Strategy playing O, "Computer plays N" after an injectable pause. Hot seat is complete as a product slice — one Frame repainted in place, number keys, Status line, Replay, Ctrl-C leaving quietly. Next: #8 (minimax + the Difficulty prompt + ADR-0003); `/dogfood` against the personas in `constitution/local-product.md` once the game is what PRD #2 describes. |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
 | **Last commit on `main`** | `1f7af30` — PR #13 squash: Ctrl-C quits quietly with status 130 (ticket #9) |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | None. |
-| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6, #9 landed (PRs #10–#13); #7 is the frontier, #8 after it. |
+| **Active worktrees** | `worktree/versus-computer` (`feat/versus-computer`, ticket #7). |
+| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6, #9 landed (PRs #10–#13); #7 is open as a PR; #8 is the last one. |
 
 ### Open questions / unresolved decisions
 
@@ -324,3 +324,47 @@ that the binary is exercised by `/dogfood` only; the spec was removed and the
 pty run kept as demo evidence. Open for the owner on the PR: whether the
 `exit` should move from `CLI.run` to `bin/tic-tac-toe`, and the rescue being
 `Interrupt` rather than only the reader's `InputInterrupt`.
+
+### 2026-08-29 — A computer to play against: the Mode question and the Random Strategy
+
+Ticket #7 (`feat/versus-computer`). The game now asks, before it draws
+anything, "Play against the computer?" — a yes/no, the same shape as "Play
+again?", because PRD #2's grill-me decision rules out selection lists and
+cursors and ADR-0002's amendment already narrowed input to keys and answers.
+The answer becomes a **Mode**, `:hot_seat` or `:versus_computer`, and the Shell
+carries it for the whole run: a Replay never asks it again.
+
+**Strategy** is the new core seam — a value answering `#call(board, mark)` with
+the Cell it chooses, so the Minimax ticket adds a second implementation and the
+Shell's routing changes in one place (`CLI.computer_strategy`). Its first
+implementation is `Strategy::Random`: `available.fetch(source.rand(available
+.length))`, where `source` is an injected object responding like `::Random`.
+The core therefore draws no randomness of its own — the Shell owns the one
+`::Random.new` — and the spec seeds it to get a deterministic answer, plus a
+draw-spread example that kills a "always take the first Cell" implementation.
+
+In the loop, ownership of a Move is one predicate: `computer_to_move?` is true
+where this run chose a Strategy and the current Mark is O. Nothing else in
+`play_game` knows about Modes; the human branch is the code that was already
+there. The computer's go pauses first — an injectable callable, default
+`->(seconds) { sleep(seconds) }` at `COMPUTER_PAUSE_SECONDS = 0.5`, a no-op in
+specs — and then repaints with `Renderer.computer_plays(cell)`, "Computer plays
+N", 1-based as the player sees it. At 16 characters it is well inside
+`STATUS_WIDTH` (22, still `NOT_A_CELL`), so the Frame keeps its one width and
+the in-place repaint arithmetic is untouched.
+
+One thing the ticket did not name and the specs now pin: because the Mode
+question and "Play again?" are both `yes?`, every `yes?` stub in the CLI spec
+had to name its question (`.with(described_class::PLAY_AGAIN)`). That is a
+sharper contract than the bare stub it replaces — a spec that meant "the Replay
+question" no longer accidentally answers a different one.
+
+Mutation: 1228 mutations (1017 on `main`), 29–30 alive and 97.55–97.63%
+coverage over four runs, against 27 alive and 97.34% on `main`. Every mutation
+of `Strategy::Random#call` and of the loop's new routing dies; the two or three
+extra survivors are all the same equivalent pair on `CLI.run`'s `random:`
+default — `::Random.new` mutated to `Random.new` (the same constant) and to
+`::Random` itself, which answers `rand` as a module method and is therefore a
+working random source too. Timeouts swung between 23 and 49 across those runs
+with the code unchanged, so on this machine mutant's timeout count is a
+measure of load under eight parallel jobs, not a property of the suite.
