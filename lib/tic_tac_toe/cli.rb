@@ -20,6 +20,9 @@ module TicTacToe
     # The question a finished Game ends on.
     PLAY_AGAIN = "Play again?"
 
+    # The status a program ended by SIGINT reports: 128 plus the signal number.
+    EXIT_INTERRUPTED = 130
+
     # A Replay is offered by a finished Game only, and asked exactly once. It
     # restarts with the settings this loop carries; today hot seat is the only
     # Mode, so a fresh Game is the whole of "the same settings".
@@ -28,6 +31,16 @@ module TicTacToe
         game = play_game(prompt, out)
         break game unless game.outcome.terminal? && prompt.yes?(PLAY_AGAIN)
       end
+    rescue Interrupt
+      quit(out)
+    end
+
+    # Ctrl-C at any Prompt: leave the Frame exactly where it is — nothing is
+    # rewound and nothing is announced — step off the line the terminal echoed
+    # the key onto, and end the process the way a signalled program does.
+    def self.quit(out)
+      out.puts
+      exit(EXIT_INTERRUPTED)
     end
 
     # One Game, drawn into a single frame that is repainted in place after
