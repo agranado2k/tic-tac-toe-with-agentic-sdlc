@@ -101,6 +101,13 @@ RSpec.describe TicTacToe::UI::Renderer do
     end
   end
 
+  describe ".computer_plays" do
+    it "names the Cell the computer took as the player sees it, 1-based" do
+      expect(described_class.computer_plays(0)).to eq("Computer plays 1")
+      expect(described_class.computer_plays(6)).to eq("Computer plays 7")
+    end
+  end
+
   describe "NOT_A_CELL" do
     it "tells the player which keys are Cells" do
       expect(described_class::NOT_A_CELL).to eq("Not a Cell — press 1–9")
@@ -112,6 +119,7 @@ RSpec.describe TicTacToe::UI::Renderer do
       statuses = [
         described_class.to_move(:x), described_class.to_move(:o), described_class::NOT_A_CELL,
         *(0...TicTacToe::Board::CELL_COUNT).map { |cell| described_class.occupied(cell) },
+        *(0...TicTacToe::Board::CELL_COUNT).map { |cell| described_class.computer_plays(cell) },
         described_class.announcement(TicTacToe::Outcome.won(:x)),
         described_class.announcement(TicTacToe::Outcome.draw)
       ]

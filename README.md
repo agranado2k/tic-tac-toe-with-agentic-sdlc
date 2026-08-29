@@ -30,10 +30,12 @@ git config core.hooksPath .githooks
 sh scripts/check.sh
 ```
 
-What exists today is a hot-seat game: X and O alternate at one keyboard, a Move
-is one keypress `1`–`9`, and a status line inside the frame says who is to move,
-why a key was refused, and who won. A computer opponent and redraw-in-place
-arrive through the chain described below.
+What exists today: one frame, repainted in place, with a status line that says
+who is to move, why a key was refused, what the computer played, and who won.
+A Move is one keypress `1`–`9`. At the start you choose to play a friend at the
+same keyboard or the computer (a random opponent for now); at the end you are
+asked "Play again?"; Ctrl-C leaves quietly. An unbeatable difficulty arrives
+through the chain described below.
 
 ## How this repo is run
 

@@ -7,11 +7,13 @@ module TicTacToe
   # The imperative shell: the one place that prints and reads. Everything it
   # calls into is a pure function over immutable values.
   #
-  # Hot seat: X and O alternate at one keyboard until the Outcome is terminal.
-  # A Move is one keypress, 1-9; a key that is not a Cell and a Cell that is
-  # already taken both leave the Board alone and ask again, saying why in the
-  # status line. One frame is drawn and then repainted in place after every
-  # Move, so the terminal shows one game rather than a log of frames.
+  # The Mode is chosen once, before the first frame. Hot seat: X and O
+  # alternate at one keyboard. Versus computer: the human is X and the
+  # Strategy plays O. Either way a human Move is one keypress, 1-9; a key that
+  # is not a Cell and a Cell that is already taken both leave the Board alone
+  # and ask again, saying why in the status line. One frame is drawn and then
+  # repainted in place after every Move, so the terminal shows one game rather
+  # than a log of frames.
   module CLI
     # Key "1" names Cell index 0 … key "9" names Cell index 8 — the same
     # numbers the Renderer draws on the empty Cells.
@@ -20,19 +22,51 @@ module TicTacToe
     # The question a finished Game ends on.
     PLAY_AGAIN = "Play again?"
 
+    # The Mode question, asked once per run. A yes/no, like "Play again?" —
+    # this game's input is keys and answers, never a selection list
+    # (ADR-0002's amendment, PRD #2 "Cell input").
+    MODE_QUESTION = "Play against the computer?"
+    HOT_SEAT = :hot_seat
+    VERSUS_COMPUTER = :versus_computer
+
+    # Versus the computer the human is X and opens, so the Strategy plays O
+    # (PRD #2 user story 3).
+    COMPUTER_MARK = :o
+
+    # The beat between the human's Move and the computer's, so the repaint
+    # reads as a Move rather than a flicker (PRD #2 user story 12).
+    COMPUTER_PAUSE_SECONDS = 0.5
+    PAUSE = ->(seconds) { sleep(seconds) }
+
     # The status a program ended by SIGINT reports: 128 plus the signal number.
     EXIT_INTERRUPTED = 130
 
     # A Replay is offered by a finished Game only, and asked exactly once. It
-    # restarts with the settings this loop carries; today hot seat is the only
-    # Mode, so a fresh Game is the whole of "the same settings".
-    def self.run(prompt: TTY::Prompt.new, out: $stdout)
+    # restarts with the settings this loop carries — the Mode, chosen before
+    # the first Game and never asked again.
+    def self.run(prompt: TTY::Prompt.new, out: $stdout, pause: PAUSE, random: ::Random.new)
+      strategy = computer_strategy(ask_mode(prompt), random)
+
       loop do
-        game = play_game(prompt, out)
+        game = play_game(prompt, out, strategy, pause)
         break game unless game.outcome.terminal? && prompt.yes?(PLAY_AGAIN)
       end
     rescue Interrupt
       quit(out)
+    end
+
+    # The Mode this run plays in, as a name rather than the raw yes/no.
+    def self.ask_mode(prompt)
+      prompt.yes?(MODE_QUESTION) ? VERSUS_COMPUTER : HOT_SEAT
+    end
+
+    # The Strategy that plays the computer's Mark, or nil in hot seat where
+    # every Move is a keypress. This is the whole of the loop's routing: a
+    # second Strategy is chosen here and nothing below changes.
+    def self.computer_strategy(mode, random)
+      return nil unless mode == VERSUS_COMPUTER
+
+      Strategy::Random.new(source: random)
     end
 
     # Ctrl-C at any Prompt: leave the Frame exactly where it is — nothing is
@@ -45,20 +79,48 @@ module TicTacToe
 
     # One Game, drawn into a single frame that is repainted in place after
     # every Move, until the Outcome is terminal or the input stream closes.
-    def self.play_game(prompt, out)
+    def self.play_game(prompt, out, strategy, pause)
       game = Game.new_game
       status = UI::Renderer.to_move(game.current_mark)
       frame = nil
 
       until game.outcome.terminal?
         frame = repaint(out, frame, game.board, status)
-        key = prompt.keypress
-        break if key.nil? # the input stream is closed: leave rather than re-ask forever
+        move = next_move(game, strategy, prompt, pause)
+        break if move.nil? # the input stream is closed: leave rather than re-ask forever
 
-        game, status = advance(game, key)
+        game, status = move
       end
 
       finish(out, frame, game)
+    end
+
+    # The Game and status line after one Move by whoever is to move, or nil
+    # when the human's input stream has closed.
+    def self.next_move(game, strategy, prompt, pause)
+      return computer_move(game, strategy, pause) if computer_to_move?(game, strategy)
+
+      key = prompt.keypress
+      return nil if key.nil?
+
+      advance(game, key)
+    end
+
+    # The computer moves only where this run chose a Strategy, and only on its
+    # own Mark.
+    def self.computer_to_move?(game, strategy)
+      !strategy.nil? && game.current_mark == COMPUTER_MARK
+    end
+
+    # The Strategy's Move, after the beat that makes the next repaint read as
+    # a Move. The Strategy names an available Cell of an unfinished Game, so a
+    # Failure here would be a bug in the Strategy rather than anything the
+    # player did — it belongs raised, not shown in the status line.
+    def self.computer_move(game, strategy, pause)
+      pause.call(COMPUTER_PAUSE_SECONDS)
+      cell = strategy.call(game.board, game.current_mark)
+
+      [game.play(cell).value!, UI::Renderer.computer_plays(cell)]
     end
 
     # Only a finished Game has an announcement to repaint, so an abandoned one
