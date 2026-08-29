@@ -19,7 +19,14 @@ RSpec.describe TicTacToe::UI::Renderer do
       BOARD
     end
 
-    it "needs no Pastel handed in (it auto-detects colour support)" do
+    it "dims the cell separators and the row dividers" do
+      output = described_class.render(TicTacToe::Board.empty, pastel: colour)
+
+      expect(output).to include(colour.dim("│"))
+      expect(output).to include(colour.dim("───┼───┼───"))
+    end
+
+    it "renders without an injected Pastel" do
       output = described_class.render(TicTacToe::Board.empty.place(0, :x).value!)
 
       expect(output).to include(" X ").and include(" 2 ")
@@ -27,8 +34,11 @@ RSpec.describe TicTacToe::UI::Renderer do
   end
 
   describe ".glyph" do
-    it "renders X bold cyan and O bold magenta" do
+    it "renders X bold cyan" do
       expect(described_class.glyph(:x, 0, colour)).to eq(colour.bold.cyan(" X "))
+    end
+
+    it "renders O bold magenta" do
       expect(described_class.glyph(:o, 0, colour)).to eq(colour.bold.magenta(" O "))
     end
 

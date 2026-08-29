@@ -12,7 +12,7 @@ module TicTacToe
       COLOR = { x: :cyan, o: :magenta }.freeze
 
       def self.render(board, pastel: Pastel.new)
-        divider = pastel.dim("\n───┼───┼───\n")
+        divider = "\n#{pastel.dim('───┼───┼───')}\n"
         grid = board.rows.each_with_index.map do |row, r|
           row.each_with_index.map { |cell, c| glyph(cell, (r * Board::SIZE) + c, pastel) }
              .join(pastel.dim("│"))
