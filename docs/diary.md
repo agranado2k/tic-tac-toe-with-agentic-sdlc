@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | Building PRD #2 ticket by ticket. First feature ticket (#4, hot-seat game) in flight: `Game` and `Outcome` values in the core, `CLI.run` loops to "X wins" / "O wins" / "Draw". Print-per-move and arrow-key select still; redraw, number keys, computer opponent and replay are #5–#9. |
+| **Phase** | First game slice landed: a hot-seat game plays to "X wins" / "O wins" / "Draw" (`Game`, `Outcome`, the shell loop). Still print-per-move and arrow-key selection. Next: ticket #5 (number keys + status line). |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
-| **Last commit on `main`** | `a7af044` — diary: PR #1 landed, PRD #2 published |
+| **Last commit on `main`** | `0939fbb` — PR #10 squash: hot-seat game to a Winner or a draw (ticket #4) |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | `worktree/name-the-tracker` on `docs/name-the-tracker` — PR #3, names GitHub Issues as the tracker; awaiting merge. `worktree/hot-seat-game` on `feat/hot-seat-game` — ticket #4; PR open, awaiting review and merge. |
-| **Spec status** | PRD #2 (2026-08-29): hot-seat + versus computer (easy/hard), number-key input, in-place redraw, replay. Decomposed by `/to-tickets` into issues #4–#9; #4 is the frontier and is being built. |
+| **Active worktrees** | None. |
+| **Spec status** | PRD #2 decomposed into tickets #4–#9 (chain #4→#5→#6→#7→#8, #9 off #6). #4 landed as PR #10; #5 is the frontier. |
 
 ### Open questions / unresolved decisions
 
@@ -176,3 +176,19 @@ hash pattern and aborts the whole run, so the shell announces the Outcome with
 a plain `case outcome.kind`. Pattern matching on `Outcome` is still fine in
 specs; avoid it under `lib/` until mutant can mutate it.
 
+
+### 2026-08-29 — PRs #3 and #10 landed by /merge-train; ticket #4 done
+
+`/pr-iterate 10` applied three of the independent review's six findings
+(player-facing strings moved into the Renderer, `Outcome` refuses an unknown
+kind, `NEXT_MARK` derived from `Board::MARKS`) and held two that overlap the
+human confirm-list (`announcement` totality; pinning `:game_over` precedence)
+plus one deferred to ticket #5 (re-ask on a refused Move). The owner chose to
+merge with the confirm-list open; its items stay on PR #10 for the record.
+
+Landed in order #3 (tracker named in the workflow article) then #10 (updated
+against the new base through the forge API before merging). Both worktrees
+pruned; `main` is `0939fbb`. Found on the way: the AI-review workflow runs
+despite its `.example` name — GitHub registers every `.yml` — and only skips
+because no provider secret is set; and mutant 0.16 crashes on `case … in`
+pattern matching, so shell code uses `case … when` on the Outcome kind.
