@@ -41,11 +41,6 @@ module TicTacToe
         pastel.decorate(" #{GLYPH.fetch(cell)} ", :bold, COLOR.fetch(cell))
       end
 
-      # The question the shell asks the current Mark.
-      def self.question(mark)
-        "Where does #{GLYPH.fetch(mark)} go?"
-      end
-
       # The status line while the Game is in progress.
       def self.to_move(mark)
         "#{GLYPH.fetch(mark)} to move"

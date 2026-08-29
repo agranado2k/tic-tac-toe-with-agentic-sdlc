@@ -91,13 +91,6 @@ RSpec.describe TicTacToe::UI::Renderer do
     end
   end
 
-  describe ".question" do
-    it "asks where the current Mark goes" do
-      expect(described_class.question(:x)).to eq("Where does X go?")
-      expect(described_class.question(:o)).to eq("Where does O go?")
-    end
-  end
-
   describe ".to_move" do
     it "names the Mark whose go it is" do
       expect(described_class.to_move(:x)).to eq("X to move")
