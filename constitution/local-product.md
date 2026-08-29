@@ -14,8 +14,9 @@ Project-specific elaboration of the root `AGENTS.md`. Read it before running
 **Ready means reachable, not started.** The framed board is on screen and a
 prompt is waiting for a key — that is how you know the surface is up; a process
 that has spawned is not a product that answers. There is one frame per game and
-it repaints where it stands, so a second board appearing below the first is a
-fault, not progress.
+it repaints where it stands, so *within a game* a second board appearing below
+the first is a fault, not progress. A Replay is the one exception: it opens a
+fresh frame below the "Play again?" line.
 
 ### PERSONAS — who is trying to do what
 

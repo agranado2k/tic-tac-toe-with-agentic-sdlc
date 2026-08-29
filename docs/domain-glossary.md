@@ -83,9 +83,10 @@ page of explanation, that page is an ADR and the entry points at it.
   Ref: ADR-0002, PRD #2.
   - _Avoid_: "message", "prompt", "banner" (a Prompt is the input adapter).
 - **Frame** — the block of text one call to `Renderer.render` returns: the
-  bordered Board with the Status line beneath it. Fixed in width and height by
-  `STATUS_WIDTH`, which is what lets the Shell repaint it in place over its
-  predecessor instead of printing a new one below. Ref: ADR-0002, PRD #2.
+  bordered Board with the Status line beneath it. Fixed in width by
+  `STATUS_WIDTH` and in height by the Shell always supplying a Status line,
+  which is what lets the Shell repaint it in place over its predecessor instead
+  of printing a new one below. Ref: ADR-0002, PRD #2.
   - _Avoid_: "screen", "box", "window".
 - **Prompt** — the `TTY::Prompt` that reads the player's single keypress, `1`–`9`
   for the Cell of that number, and the yes/no answer to "Play again?".
