@@ -4,6 +4,14 @@ Project-specific elaboration of the root `AGENTS.md`'s process rules. The root
 carries the binding one-liners; this article carries the detail you need when
 you are actually doing the thing.
 
+## The tracker
+
+Specs and tickets live in **GitHub Issues** on this repository. `/to-prd`
+publishes a PRD as one issue labelled `prd`; `/to-tickets` publishes one issue
+per ticket referencing it. The autonomy label is `ready-for-agent` (shared
+invariant §6): present means an agent may take the ticket solo, absent means a
+human stays in the loop.
+
 ## Commits
 
 Conventional Commits. The root states the format; this is the practice around it.
