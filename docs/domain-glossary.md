@@ -59,6 +59,18 @@ page of explanation, that page is an ADR and the entry points at it.
 - **Line** — one of the eight winning sets of three Cells (rows, columns,
   diagonals). Constant on `Board`.
 - **Winner** — the Mark holding a complete Line, or none. Derived, never stored.
+- **Game** — a Board together with the current Mark (whose go it is), as one
+  immutable value. `Game.new_game` is an empty Board with X current;
+  `Game#play` is a Move by the current Mark, returning `Success(Game)` or
+  `Failure(:occupied | :out_of_bounds | :game_over)`. Value Object
+  (`Data.define`); not persisted. Ref: ADR-0001, PRD #2.
+  - _Avoid_: "match", "session", "state".
+- **Outcome** — what a Game has come to: `won(mark)`, `draw`, or
+  `in_progress`. Derived from the Board (Winner takes precedence over a full
+  Board), never stored; `terminal?` says whether another Move is possible.
+  Value Object (`Data.define`). Ref: ADR-0001, PRD #2.
+  - _Avoid_: "result" (a `Dry::Monads::Result` is a different thing here),
+    "status", "end state".
 
 ## The terminal (`lib/tic_tac_toe/ui/`, `lib/tic_tac_toe/cli.rb`)
 

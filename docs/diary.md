@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | Stack scaffolded on top of the kit: Ruby 3.4 + Bundler, functional core (`lib/tic_tac_toe/board.rb`), TTY-toolkit shell, RSpec + RuboCop, CI. One tracer bullet runs end to end (render → one move → render). No game loop yet. |
+| **Phase** | Building PRD #2 ticket by ticket. First feature ticket (#4, hot-seat game) in flight: `Game` and `Outcome` values in the core, `CLI.run` loops to "X wins" / "O wins" / "Draw". Print-per-move and arrow-key select still; redraw, number keys, computer opponent and replay are #5–#9. |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
-| **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` — created empty, never pushed yet |
-| **Last commit on `main`** | `f3f65f0` — PR #1 squash: mutant wired, specs hardened, review fixes |
+| **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
+| **Last commit on `main`** | `a7af044` — diary: PR #1 landed, PRD #2 published |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | `worktree/name-the-tracker` on `docs/name-the-tracker` — PR #3, names GitHub Issues as the tracker; awaiting merge. |
-| **Spec status** | PRD published as GitHub issue #2 (2026-08-29) after `/grill-me`: hot-seat + versus computer (easy/hard), number-key input, in-place redraw, replay. `/to-tickets` in progress. |
+| **Active worktrees** | `worktree/name-the-tracker` on `docs/name-the-tracker` — PR #3, names GitHub Issues as the tracker; awaiting merge. `worktree/hot-seat-game` on `feat/hot-seat-game` — ticket #4; PR open, awaiting review and merge. |
+| **Spec status** | PRD #2 (2026-08-29): hot-seat + versus computer (easy/hard), number-key input, in-place redraw, replay. Decomposed by `/to-tickets` into issues #4–#9; #4 is the frontier and is being built. |
 
 ### Open questions / unresolved decisions
 
@@ -157,3 +157,22 @@ The two open questions above are resolved by it. GitHub Issues is the tracker
 labels exist on the repo. Upstream kit findings filed as agentic-sdlc #85
 (no mutation-tool decision at bootstrap) and #86 (skills invisible to the
 installing session).
+
+### 2026-08-29 — Hot-seat game: the first PRD #2 ticket, and the seams it fixes
+
+Ticket #4 (`feat/hot-seat-game`) adds the two values every later ticket
+builds on. `Game` is `Data.define(:board, :current_mark)` — the field is named
+after the glossary's "current Mark", never "turn" — with `Game#play(cell)`
+reusing `Board#place` and failing with `:game_over` once the Game is finished.
+`Outcome` is `Data.define(:kind, :mark)` with constructors `won(mark)`, `draw`,
+`in_progress`, derived by `Outcome.of(board)` with the Winner taking precedence
+over a full Board; `terminal?` is the loop's exit test. Both are reopened as
+classes after `Data.define` so mutant sees them. `CLI.run` now loops to the
+announcement ("X wins" / "O wins" / "Draw") and returns the finished Game
+instead of a Board.
+
+One tooling finding: mutant 0.16.3 raises a `GenerationError` on a `case … in`
+hash pattern and aborts the whole run, so the shell announces the Outcome with
+a plain `case outcome.kind`. Pattern matching on `Outcome` is still fine in
+specs; avoid it under `lib/` until mutant can mutate it.
+
