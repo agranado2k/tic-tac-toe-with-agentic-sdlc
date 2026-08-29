@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "stringio"
+require "tty-cursor"
 
 RSpec.describe TicTacToe::CLI do
   describe ".run" do
@@ -11,12 +12,46 @@ RSpec.describe TicTacToe::CLI do
       allow(prompt).to receive(:keypress).and_return(*keys)
     end
 
+    # The bytes that put the cursor back at the top-left of a frame just
+    # written and clear from there down, so the next frame lands on top of it.
+    def rewind_over(frame)
+      TTY::Cursor.up(frame.lines.count) + TTY::Cursor.column(1) + TTY::Cursor.clear_screen_down
+    end
+
+    # The byte stream of a sequence of frames all drawn in one place: the first
+    # printed, every one after it preceded by a rewind over its predecessor.
+    def in_place(frames)
+      frames.each_cons(2).map { |previous, frame| rewind_over(previous) + frame }.unshift(frames.first).join
+    end
+
+    it "repaints in place: the frame after the first is preceded by a rewind over it" do
+      script("5", nil)
+
+      described_class.run(prompt: prompt, out: out)
+
+      first = TicTacToe::UI::Renderer.render(TicTacToe::Board.empty, status: "X to move")
+      second = TicTacToe::UI::Renderer.render(game_after(4).board, status: "O to move")
+      expect(out.string).to eq(in_place([first, second]))
+    end
+
     it "places the current Mark in the Cell the pressed number names" do
       script("5", "2", "1", "3", "9")
 
       game = described_class.run(prompt: prompt, out: out)
 
       expect(game.board.cells).to eq([:x, :o, :o, nil, :x, nil, nil, nil, :x])
+    end
+
+    it "repaints a re-ask in place, over the frame that asked for the key" do
+      script("q", "5", nil)
+
+      described_class.run(prompt: prompt, out: out)
+
+      renderer = TicTacToe::UI::Renderer
+      asking = renderer.render(TicTacToe::Board.empty, status: renderer.to_move(:x))
+      refused = renderer.render(TicTacToe::Board.empty, status: renderer::NOT_A_CELL)
+      played = renderer.render(game_after(4).board, status: renderer.to_move(:o))
+      expect(out.string).to eq(in_place([asking, refused, played]))
     end
 
     it "re-asks with a status when the key is not a Cell, leaving the Board alone" do
@@ -82,9 +117,10 @@ RSpec.describe TicTacToe::CLI do
       frames = games[0...-1].map do |g|
         TicTacToe::UI::Renderer.render(g.board, status: TicTacToe::UI::Renderer.to_move(g.current_mark))
       end
+      frames << TicTacToe::UI::Renderer.render(games.last.board, status: "X wins")
       expect(prompt).to have_received(:keypress).exactly(5).times
       expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
-      expect(out.string).to eq(frames.join + TicTacToe::UI::Renderer.render(games.last.board, status: "X wins"))
+      expect(out.string).to eq(in_place(frames))
     end
 
     it "leaves when the input stream is closed instead of re-asking forever" do
