@@ -9,7 +9,7 @@ Project-specific elaboration of the root `AGENTS.md`. Read it before running
 
 | Surface | What it is | How to bring it up | Notes / prerequisites |
 | --- | --- | --- | --- |
-| Terminal game | CLI binary, interactive, in the developer's own terminal | `bundle exec bin/tic-tac-toe` | Ruby per `.ruby-version` (rbenv) and `bundle install` once. Needs a real TTY: the prompt reads arrow keys and Enter |
+| Terminal game | CLI binary, interactive, in the developer's own terminal | `bundle exec bin/tic-tac-toe` | Ruby per `.ruby-version` (rbenv) and `bundle install` once. Needs a real TTY: the prompt reads a single keypress, `1`–`9` |
 
 **Ready means reachable, not started.** The framed board is on screen and a
 prompt is waiting for a key — that is how you know the surface is up; a process

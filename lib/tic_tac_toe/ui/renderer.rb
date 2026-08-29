@@ -52,7 +52,7 @@ module TicTacToe
         "Cell #{cell + 1} is taken"
       end
 
-      # The line printed after the final frame. A plain case on the kind:
+      # The status line of a finished Game. A plain case on the kind:
       # mutant 0.16 cannot mutate a `case … in` pattern match, and a crash
       # there aborts the whole run.
       def self.announcement(outcome)

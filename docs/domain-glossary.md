@@ -74,10 +74,16 @@ page of explanation, that page is an ADR and the entry points at it.
 
 ## The terminal (`lib/tic_tac_toe/ui/`, `lib/tic_tac_toe/cli.rb`)
 
-- **Renderer** — the pure function from a Board to the `String` the player
-  sees. Adapter (out). Ref: ADR-0002.
-- **Prompt** — the `TTY::Prompt` that asks the player for a Cell. Adapter (in).
-  Ref: ADR-0002.
+- **Renderer** — the pure function from a Board and a Status line to the
+  `String` the player sees. Adapter (out). Ref: ADR-0002.
+- **Status line** — the one line the Renderer draws inside the frame beneath
+  the Board: which Mark is to move, why a keypress was refused, or the Winner
+  or draw. An input to `Renderer.render`, padded to one width so a re-ask never
+  resizes the frame; derived per Move by the Shell, never stored.
+  Ref: ADR-0002, PRD #2.
+  - _Avoid_: "message", "prompt", "banner" (a Prompt is the input adapter).
+- **Prompt** — the `TTY::Prompt` that reads the player's single keypress, `1`–`9`
+  for the Cell of that number. Adapter (in). Ref: ADR-0002.
 - **Shell** — `TicTacToe::CLI`, the only place that prints and reads.
   Ref: ADR-0001.
 
