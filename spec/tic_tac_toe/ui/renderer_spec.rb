@@ -4,10 +4,6 @@ RSpec.describe TicTacToe::UI::Renderer do
   let(:plain) { Pastel.new(enabled: false) }
   let(:colour) { Pastel.new(enabled: true) }
 
-  def play(*cells)
-    cells.reduce(TicTacToe::Game.new_game) { |game, cell| game.play(cell).value! }.board
-  end
-
   describe ".render" do
     it "draws the numbered, framed board exactly" do
       board = TicTacToe::Board.empty.place(4, :x).value!.place(0, :o).value!
@@ -24,7 +20,7 @@ RSpec.describe TicTacToe::UI::Renderer do
     end
 
     it "draws the win frame exactly" do
-      board = play(0, 3, 1, 4, 2)
+      board = game_after(0, 3, 1, 4, 2).board
       status = described_class.announcement(TicTacToe::Outcome.of(board))
 
       expect(described_class.render(board, status: status, pastel: plain)).to eq(<<~BOARD)
@@ -41,7 +37,7 @@ RSpec.describe TicTacToe::UI::Renderer do
     end
 
     it "draws the draw frame exactly" do
-      board = play(0, 1, 2, 4, 3, 5, 7, 6, 8)
+      board = game_after(0, 1, 2, 4, 3, 5, 7, 6, 8).board
       status = described_class.announcement(TicTacToe::Outcome.of(board))
 
       expect(described_class.render(board, status: status, pastel: plain)).to eq(<<~BOARD)
