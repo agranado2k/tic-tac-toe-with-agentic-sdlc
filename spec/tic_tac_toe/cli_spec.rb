@@ -13,7 +13,8 @@ RSpec.describe TicTacToe::CLI do
 
       expect(board.cells).to eq([nil, nil, nil, nil, :x, nil, nil, nil, nil])
       expect(prompt).to have_received(:select)
-        .with("Where does X go?", described_class.choices_for(TicTacToe::Board.empty), cycle: true, per_page: 9)
+        .with("Where does X go?", hash_including("Cell 1" => 0, "Cell 9" => 8),
+              cycle: true, per_page: TicTacToe::Board::CELL_COUNT)
 
       first, second = out.string.split(/^(?=╔)/)
       expect(first).to include(" 5 ")
