@@ -3,11 +3,23 @@
 RSpec.describe TicTacToe::Strategy::Minimax do
   subject(:minimax) { described_class.new }
 
-  it "separates equally scored Cells by the centre, then the corners, then the edges" do
-    expect(described_class::PREFERENCE).to eq([4, 0, 2, 6, 8, 1, 3, 5, 7])
-  end
-
   describe "#call" do
+    it "prefers a corner to an edge among Cells the search scores equal" do
+      # O to move with only Cell 5 (an edge) and Cell 8 (a corner) free, and
+      # both a draw under perfect play: the preference order decides.
+      game = game_after(0, 1, 2, 4, 3, 6, 7)
+
+      expect(minimax.call(game.board, :o)).to eq(8)
+    end
+
+    it "puts off a forced loss as long as it can" do
+      # X holds 0 and 3 against O's 1: every O Move loses, but Cell 6 blocks
+      # the column and makes X earn it two Moves later than any other Cell.
+      game = game_after(0, 1, 3)
+
+      expect(minimax.call(game.board, :o)).to eq(6)
+    end
+
     it "takes an immediate win when one exists" do
       # O holds 1 and 4 and completes that Line on 7; X holds 0, 2 and 8 and
       # threatens nothing.
