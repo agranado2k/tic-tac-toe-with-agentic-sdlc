@@ -76,9 +76,13 @@ page of explanation, that page is an ADR and the entry points at it.
   state injected into it (Random's source), never of anything global. A value
   answering `#call(board, mark)`, so the Shell can hold one and hand it the
   Board each go. **Random** is
-  the first implementation — any available Cell, uniformly, drawn from an
-  injected random source so nothing in the core reaches for global randomness;
-  Minimax is the second. Ref: ADR-0001, PRD #2.
+  the easy implementation — any available Cell, uniformly, drawn from an
+  injected random source so nothing in the core reaches for global randomness.
+  **Minimax** is the hard one — a full-depth search over the immutable Board
+  that never loses, scoring a faster win above a slower one and a slower loss
+  above a faster one, with Cells it scores equal separated by a fixed order:
+  the centre, then the corners, then the edges. Ref: ADR-0001, ADR-0003,
+  PRD #2.
   - _Avoid_: "AI", "bot", "engine", "opponent" (an opponent is a person or a
     Mode; a Strategy is the function that chooses).
 
@@ -105,17 +109,25 @@ page of explanation, that page is an ADR and the entry points at it.
   pressing keys. Ref: PRD #2.
   - _Avoid_: "game type", "opponent", "setting", "difficulty" (Difficulty is
     which Strategy plays, not who plays).
+- **Difficulty** — how hard the computer is to beat: `:easy`, where the Random
+  Strategy plays O, or `:hard`, where Minimax does. A symbol, chosen once
+  through the Prompt directly after the Mode question and only where that
+  answer put a computer in the Game — hot seat has no Difficulty — and carried
+  by the Shell for the whole run, never by `Game`, which does not know which
+  Strategy is choosing its Cells. Ref: ADR-0003, PRD #2.
+  - _Avoid_: "level", "skill", "strength", "mode" (a Mode is who plays; a
+    Difficulty is which Strategy plays for the computer).
 - **Pause** — the callable the Shell waits with between the human's Move and the
   computer's, so the repaint reads as a Move rather than a flicker. Injected
   into `CLI.run`; the default sleeps `CLI::COMPUTER_PAUSE_SECONDS` (0.5 s) and a
   spec passes a no-op. Ref: PRD #2.
   - _Avoid_: "delay", "sleep", "think time", "animation".
 - **Prompt** — the `TTY::Prompt` that reads the player's single keypress, `1`–`9`
-  for the Cell of that number, and the yes/no answers to the Mode question and
-  to "Play again?". Adapter (in). Ref: ADR-0002.
+  for the Cell of that number, and the yes/no answers to the Mode question, the
+  Difficulty question and "Play again?". Adapter (in). Ref: ADR-0002.
 - **Replay** — a fresh Game started after a finished one, on the player
   answering yes to the Prompt's "Play again?". It carries the Shell's settings
-  forward — the Mode, which is never asked a second time — so a Replay is
+  forward — the Mode and the Difficulty, neither asked a second time — so a Replay is
   `Game.new_game` played the same way. Ref: PRD #2.
   - _Avoid_: "restart", "rematch", "round", "new session".
 - **Shell** — `TicTacToe::CLI`, the only place that prints and reads. It owns
@@ -135,4 +147,4 @@ banned word and the word to use instead.
 - **square / slot / position** — ambiguous here (position also means "board position" in game-tree talk). Use **Cell**.
 - **piece / token / symbol** — ambiguous here (symbol is also a Ruby type). Use **Mark**.
 - **turn** — ambiguous here (whose go vs. what they did). Use **Move** for the act; say "current Mark" for whose go it is.
-- **AI / bot / engine** — the computer opponent is a **Strategy**, and which one is playing is the **Mode** (later, the Difficulty).
+- **AI / bot / engine** — the computer opponent is a **Strategy**; whether one plays at all is the **Mode**, and which one plays is the **Difficulty**.
