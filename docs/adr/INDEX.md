@@ -18,6 +18,7 @@ alone answers "what is currently binding?" without opening 40 files.
 |---|---|---|
 | 0001 | [Adopt a functional core with an imperative shell](0001-functional-core-imperative-shell.md) | Accepted 2026-08-29 |
 | 0002 | [Adopt the TTY toolkit for terminal rendering and input](0002-tty-toolkit-for-the-terminal.md) | Accepted 2026-08-29 |
+| 0003 | [Adopt full-depth minimax as the hard Difficulty's Strategy](0003-minimax-strategy-for-hard-difficulty.md) | Accepted 2026-08-29 |
 
 ## Conventions
 
