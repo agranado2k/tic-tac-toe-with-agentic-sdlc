@@ -32,7 +32,7 @@ portable reasoning behind several of these rules is in `shared-invariants.md`.
   string, `lib/tic_tac_toe/cli.rb` prints it and reads the next input.
 - **Enforcement**: `bundle exec rubocop` fails the build (inside a worktree too —
   see the comment in `.rubocop.yml` on why the `worktree/` exclude is rooted at
-  the working directory). There is no type
+  the invocation directory). There is no type
   checker; the immutability rules above are enforced by review and by the
   specs that assert a value is frozen.
 
