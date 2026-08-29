@@ -7,8 +7,60 @@ RSpec.describe TicTacToe::CLI do
     let(:prompt) { instance_double(TTY::Prompt) }
     let(:out) { StringIO.new }
 
+    before { allow(prompt).to receive(:yes?).and_return(false) }
+
     def script(*keys)
       allow(prompt).to receive(:keypress).and_return(*keys)
+    end
+
+    # The keys of one scripted X win, and the frames it draws: one per Move,
+    # then the announcement.
+    def x_win_keys
+      %w[1 4 2 5 3]
+    end
+
+    def x_win_games
+      (0..x_win_keys.size).map { |n| game_after(*x_win_keys.first(n).map { |k| k.to_i - 1 }) }
+    end
+
+    def x_win_frames
+      renderer = TicTacToe::UI::Renderer
+      games = x_win_games
+      asking = games[0...-1].map { |g| renderer.render(g.board, status: renderer.to_move(g.current_mark)) }
+      asking + [renderer.render(games.last.board, status: "X wins")]
+    end
+
+    # The literal bytes that put the cursor back at the top-left of the
+    # nine-line frame just written and clear from there down: up 9, column 1,
+    # clear to the end of the screen.
+    def rewind
+      "\e[9A\e[1G\e[J"
+    end
+
+    # The byte stream of a sequence of frames all drawn in one place: the first
+    # printed, every one after it preceded by the rewind.
+    def in_place(frames)
+      frames.join(rewind)
+    end
+
+    it "rewinds over a nine-line frame with exactly: up 9, column 1, clear down" do
+      script("5", nil)
+
+      described_class.run(prompt: prompt, out: out)
+
+      first = TicTacToe::UI::Renderer.render(TicTacToe::Board.empty, status: "X to move")
+      expect(first.lines.count).to eq(9)
+      expect(out.string).to start_with(first + rewind)
+    end
+
+    it "repaints in place: the frame after the first lands where it was" do
+      script("5", nil)
+
+      described_class.run(prompt: prompt, out: out)
+
+      first = TicTacToe::UI::Renderer.render(TicTacToe::Board.empty, status: "X to move")
+      second = TicTacToe::UI::Renderer.render(game_after(4).board, status: "O to move")
+      expect(out.string).to eq(in_place([first, second]))
     end
 
     it "places the current Mark in the Cell the pressed number names" do
@@ -17,6 +69,18 @@ RSpec.describe TicTacToe::CLI do
       game = described_class.run(prompt: prompt, out: out)
 
       expect(game.board.cells).to eq([:x, :o, :o, nil, :x, nil, nil, nil, :x])
+    end
+
+    it "repaints a re-ask in place, over the frame that asked for the key" do
+      script("q", "5", nil)
+
+      described_class.run(prompt: prompt, out: out)
+
+      renderer = TicTacToe::UI::Renderer
+      asking = renderer.render(TicTacToe::Board.empty, status: renderer.to_move(:x))
+      refused = renderer.render(TicTacToe::Board.empty, status: renderer::NOT_A_CELL)
+      played = renderer.render(game_after(4).board, status: renderer.to_move(:o))
+      expect(out.string).to eq(in_place([asking, refused, played]))
     end
 
     it "re-asks with a status when the key is not a Cell, leaving the Board alone" do
@@ -73,18 +137,50 @@ RSpec.describe TicTacToe::CLI do
     end
 
     it "plays a scripted X win in five keypresses, one frame each plus the announcement" do
-      keys = %w[1 4 2 5 3]
-      script(*keys)
+      script(*x_win_keys)
 
       game = described_class.run(prompt: prompt, out: out)
 
-      games = (0..keys.size).map { |n| game_after(*keys.first(n).map { |k| k.to_i - 1 }) }
-      frames = games[0...-1].map do |g|
-        TicTacToe::UI::Renderer.render(g.board, status: TicTacToe::UI::Renderer.to_move(g.current_mark))
-      end
       expect(prompt).to have_received(:keypress).exactly(5).times
       expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
-      expect(out.string).to eq(frames.join + TicTacToe::UI::Renderer.render(games.last.board, status: "X wins"))
+      expect(out.string).to eq(in_place(x_win_frames))
+    end
+
+    it "offers Play again? after a finished Game, and returns when the answer is no" do
+      script(*x_win_keys)
+
+      game = described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).to have_received(:yes?).with("Play again?").once
+      expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
+    end
+
+    it "starts a Replay as a fresh Game below the finished frame when the answer is yes" do
+      script(*(x_win_keys * 2))
+      allow(prompt).to receive(:yes?).and_return(true, false)
+
+      game = described_class.run(prompt: prompt, out: out)
+
+      expect(game).to eq(game_after(0, 3, 1, 4, 2))
+      expect(out.string).to eq(in_place(x_win_frames) * 2)
+    end
+
+    it "asks Play again? once per finished Game" do
+      script(*(x_win_keys * 2))
+      allow(prompt).to receive(:yes?).and_return(true, false)
+
+      described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).to have_received(:keypress).exactly(10).times
+      expect(prompt).to have_received(:yes?).twice
+    end
+
+    it "does not offer Play again? for a Game abandoned when the input stream closed" do
+      script("5", nil)
+
+      described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).not_to have_received(:yes?)
     end
 
     it "leaves when the input stream is closed instead of re-asking forever" do

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "tty-cursor"
 require "tty-prompt"
 
 module TicTacToe
@@ -9,27 +10,67 @@ module TicTacToe
   # Hot seat: X and O alternate at one keyboard until the Outcome is terminal.
   # A Move is one keypress, 1-9; a key that is not a Cell and a Cell that is
   # already taken both leave the Board alone and ask again, saying why in the
-  # status line. The Board is printed after every Move; in-place redraw is a
-  # later ticket.
+  # status line. One frame is drawn and then repainted in place after every
+  # Move, so the terminal shows one game rather than a log of frames.
   module CLI
     # Key "1" names Cell index 0 … key "9" names Cell index 8 — the same
     # numbers the Renderer draws on the empty Cells.
     CELL_KEYS = (1..Board::CELL_COUNT).map(&:to_s).freeze
 
+    # The question a finished Game ends on.
+    PLAY_AGAIN = "Play again?"
+
+    # A Replay is offered by a finished Game only, and asked exactly once. It
+    # restarts with the settings this loop carries; today hot seat is the only
+    # Mode, so a fresh Game is the whole of "the same settings".
     def self.run(prompt: TTY::Prompt.new, out: $stdout)
+      loop do
+        game = play_game(prompt, out)
+        break game unless game.outcome.terminal? && prompt.yes?(PLAY_AGAIN)
+      end
+    end
+
+    # One Game, drawn into a single frame that is repainted in place after
+    # every Move, until the Outcome is terminal or the input stream closes.
+    def self.play_game(prompt, out)
       game = Game.new_game
       status = UI::Renderer.to_move(game.current_mark)
+      frame = nil
 
       until game.outcome.terminal?
-        out.puts UI::Renderer.render(game.board, status: status)
+        frame = repaint(out, frame, game.board, status)
         key = prompt.keypress
         break if key.nil? # the input stream is closed: leave rather than re-ask forever
 
         game, status = advance(game, key)
       end
 
-      out.puts UI::Renderer.render(game.board, status: UI::Renderer.announcement(game.outcome))
+      finish(out, frame, game)
+    end
+
+    # Only a finished Game has an announcement to repaint, so an abandoned one
+    # (the input stream closed) keeps the frame it last drew instead of losing
+    # its status line.
+    def self.finish(out, frame, game)
+      repaint(out, frame, game.board, UI::Renderer.announcement(game.outcome)) if game.outcome.terminal?
       game
+    end
+
+    # Draw one frame where the previous one is, and answer with it: the first
+    # frame of a Game is printed, every frame after it lands on top of its
+    # predecessor. Returns the frame now on screen.
+    def self.repaint(out, previous, board, status)
+      out.print(rewind_over(previous)) if previous
+      frame = UI::Renderer.render(board, status: status)
+      out.print(frame)
+      frame
+    end
+
+    # The cursor sequence that returns to the top-left of a frame already on
+    # screen and clears from there down. The column is set explicitly because
+    # the Prompt may have left the cursor anywhere on the line below.
+    def self.rewind_over(frame)
+      TTY::Cursor.up(frame.lines.count) + TTY::Cursor.column(1) + TTY::Cursor.clear_screen_down
     end
 
     # The Game and the status line after one keypress: the Move played and the
