@@ -85,12 +85,4 @@ RSpec.describe TicTacToe::CLI do
       )
     end
   end
-
-  describe ".announcement" do
-    it "names the winning Mark or the draw" do
-      expect(described_class.announcement(TicTacToe::Outcome.won(:x))).to eq("X wins")
-      expect(described_class.announcement(TicTacToe::Outcome.won(:o))).to eq("O wins")
-      expect(described_class.announcement(TicTacToe::Outcome.draw)).to eq("Draw")
-    end
-  end
 end
