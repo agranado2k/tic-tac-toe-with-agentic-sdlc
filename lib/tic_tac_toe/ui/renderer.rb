@@ -52,6 +52,12 @@ module TicTacToe
         "Cell #{cell + 1} is taken"
       end
 
+      # The status line naming the Cell the computer just took — the only sign
+      # on a repainted Board of what changed. 1-based, as the player sees it.
+      def self.computer_plays(cell)
+        "Computer plays #{cell + 1}"
+      end
+
       # The status line of a finished Game. A plain case on the kind:
       # mutant 0.16 cannot mutate a `case … in` pattern match, and a crash
       # there aborts the whole run.

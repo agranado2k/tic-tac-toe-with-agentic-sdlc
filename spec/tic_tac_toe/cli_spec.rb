@@ -151,13 +151,13 @@ RSpec.describe TicTacToe::CLI do
 
       game = described_class.run(prompt: prompt, out: out)
 
-      expect(prompt).to have_received(:yes?).with("Play again?").once
+      expect(prompt).to have_received(:yes?).with(described_class::PLAY_AGAIN).once
       expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
     end
 
     it "starts a Replay as a fresh Game below the finished frame when the answer is yes" do
       script(*(x_win_keys * 2))
-      allow(prompt).to receive(:yes?).and_return(true, false)
+      allow(prompt).to receive(:yes?).with(described_class::PLAY_AGAIN).and_return(true, false)
 
       game = described_class.run(prompt: prompt, out: out)
 
@@ -167,12 +167,12 @@ RSpec.describe TicTacToe::CLI do
 
     it "asks Play again? once per finished Game" do
       script(*(x_win_keys * 2))
-      allow(prompt).to receive(:yes?).and_return(true, false)
+      allow(prompt).to receive(:yes?).with(described_class::PLAY_AGAIN).and_return(true, false)
 
       described_class.run(prompt: prompt, out: out)
 
       expect(prompt).to have_received(:keypress).exactly(10).times
-      expect(prompt).to have_received(:yes?).twice
+      expect(prompt).to have_received(:yes?).with(described_class::PLAY_AGAIN).twice
     end
 
     it "does not offer Play again? for a Game abandoned when the input stream closed" do
@@ -180,7 +180,7 @@ RSpec.describe TicTacToe::CLI do
 
       described_class.run(prompt: prompt, out: out)
 
-      expect(prompt).not_to have_received(:yes?)
+      expect(prompt).not_to have_received(:yes?).with(described_class::PLAY_AGAIN)
     end
 
     it "leaves when the input stream is closed instead of re-asking forever" do
@@ -191,6 +191,109 @@ RSpec.describe TicTacToe::CLI do
       expect(prompt).to have_received(:keypress).exactly(2).times
       expect(game).to eq(game_after(4))
       expect(game.outcome).not_to be_terminal
+    end
+
+    # Versus the computer the human is X and opens; O is the Strategy's. The
+    # random source is injected, so "the first available Cell" is what the
+    # computer plays in every example below and the frames are exact.
+    context "in versus-computer Mode" do
+      let(:pause) { ->(seconds) { paused << seconds } }
+      let(:paused) { [] }
+      let(:lowest_cell) { instance_double(Random, rand: 0) }
+
+      before { allow(prompt).to receive(:yes?).with(described_class::MODE_QUESTION).and_return(true) }
+
+      def play(*keys)
+        script(*keys)
+        described_class.run(prompt: prompt, out: out, pause: pause, random: lowest_cell)
+      end
+
+      it "plays O from the Strategy, announcing the Cell it took" do
+        play("5", nil)
+
+        renderer = TicTacToe::UI::Renderer
+        asking = renderer.render(TicTacToe::Board.empty, status: renderer.to_move(:x))
+        placed = renderer.render(game_after(4).board, status: renderer.to_move(:o))
+        answered = renderer.render(game_after(4, 0).board, status: "Computer plays 1")
+        expect(out.string).to eq(in_place([asking, placed, answered]))
+      end
+
+      it "never asks the Prompt for O's Move" do
+        play("5", "2", "8")
+
+        expect(prompt).to have_received(:keypress).exactly(3).times
+      end
+
+      it "pauses once per computer Move, for the default seconds" do
+        play("5", "2", "8")
+
+        expect(paused).to eq([0.5, 0.5])
+      end
+
+      it "announces X wins when the human completes a Line" do
+        game = play("5", "2", "8")
+
+        expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
+        expect(out.string).to end_with(TicTacToe::UI::Renderer.render(game.board, status: "X wins"))
+      end
+
+      it "announces O wins when the computer completes a Line" do
+        game = play("5", "6", "8")
+
+        expect(game.board.cells).to eq([:o, :o, :o, nil, :x, :x, nil, :x, nil])
+        expect(game.outcome).to eq(TicTacToe::Outcome.won(:o))
+        expect(out.string).to end_with(TicTacToe::UI::Renderer.render(game.board, status: "O wins"))
+      end
+
+      it "announces a Draw when the Board fills with no Winner" do
+        game = play("2", "4", "5", "7", "9")
+
+        expect(game.outcome).to eq(TicTacToe::Outcome.draw)
+        expect(out.string).to end_with(TicTacToe::UI::Renderer.render(game.board, status: "Draw"))
+      end
+
+      it "keeps the Mode over a Replay without asking for it again" do
+        allow(prompt).to receive(:yes?).with(described_class::PLAY_AGAIN).and_return(true, false)
+
+        play(*(%w[5 2 8] * 2))
+
+        expect(prompt).to have_received(:yes?).with(described_class::MODE_QUESTION).once
+        expect(paused).to eq([0.5] * 4)
+      end
+
+      it "refuses a Cell the computer took, naming it, and asks the human again" do
+        play("5", "1", "2", nil)
+
+        expect(out.string).to include(
+          TicTacToe::UI::Renderer.render(game_after(4, 0).board, status: "Cell 1 is taken")
+        )
+      end
+
+      it "builds its own random source and pause when given neither" do
+        allow(TTY::Prompt).to receive(:new).and_return(prompt)
+        allow(described_class).to receive(:sleep)
+        script("5", nil)
+
+        expect { described_class.run }.to output(/Computer plays [1-9]/).to_stdout
+        expect(described_class).to have_received(:sleep).with(0.5)
+      end
+    end
+
+    it "asks which Mode to play before drawing the first frame" do
+      script("5", nil)
+
+      described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).to have_received(:yes?).with(described_class::MODE_QUESTION).once
+    end
+
+    it "never pauses in hot seat, where every Move is a keypress" do
+      script(*%w[1 4 2 5 3])
+      paused = []
+
+      described_class.run(prompt: prompt, out: out, pause: ->(seconds) { paused << seconds })
+
+      expect(paused).to be_empty
     end
 
     it "builds its own prompt and writes to $stdout when given neither" do
@@ -230,13 +333,62 @@ RSpec.describe TicTacToe::CLI do
 
       it "ends with exit status 130 when a SIGINT lands on Play again?" do
         script(*x_win_keys)
-        allow(prompt).to receive(:yes?).and_raise(Interrupt)
+        allow(prompt).to receive(:yes?).with(described_class::PLAY_AGAIN).and_raise(Interrupt)
 
         expect { described_class.run(prompt: prompt, out: out) }
           .to raise_error(SystemExit) { |quit| expect(quit.status).to eq(130) }
 
         expect(out.string).to eq("#{in_place(x_win_frames)}\n")
       end
+    end
+  end
+
+  describe ".ask_mode" do
+    let(:prompt) { instance_double(TTY::Prompt) }
+
+    it "names the versus-computer Mode when the answer is yes" do
+      allow(prompt).to receive(:yes?).with(described_class::MODE_QUESTION).and_return(true)
+
+      expect(described_class.ask_mode(prompt)).to eq(described_class::VERSUS_COMPUTER)
+    end
+
+    it "names the hot-seat Mode when the answer is no" do
+      allow(prompt).to receive(:yes?).with(described_class::MODE_QUESTION).and_return(false)
+
+      expect(described_class.ask_mode(prompt)).to eq(described_class::HOT_SEAT)
+    end
+  end
+
+  # A Strategy is any callable of a Board and the Mark to move, so a lambda
+  # stands in for one here — that is the seam the Minimax ticket plugs into.
+  describe ".computer_move" do
+    let(:no_pause) { ->(_seconds) {} }
+
+    it "hands the Strategy the Board and the Mark whose go it is" do
+      seen = nil
+      strategy = lambda do |board, mark|
+        seen = [board, mark]
+        board.available_cells.first
+      end
+
+      described_class.computer_move(game_after(4), strategy, no_pause)
+
+      expect(seen).to eq([game_after(4).board, :o])
+    end
+
+    it "answers with the Game after the Strategy's Move and a status naming the Cell" do
+      game, status = described_class.computer_move(game_after(4), ->(*) { 0 }, no_pause)
+
+      expect(game).to eq(game_after(4, 0))
+      expect(status).to eq("Computer plays 1")
+    end
+
+    it "waits the default seconds before the Move" do
+      waited = []
+
+      described_class.computer_move(game_after(4), ->(*) { 0 }, ->(seconds) { waited << seconds })
+
+      expect(waited).to eq([described_class::COMPUTER_PAUSE_SECONDS])
     end
   end
 
