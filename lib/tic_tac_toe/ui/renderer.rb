@@ -19,7 +19,7 @@ module TicTacToe
       # `status` is the status line — one message drawn inside the frame under
       # the Board. Omitting it draws the bare Board.
       def self.render(board, status: nil, pastel: Pastel.new)
-        content = [rows(board, pastel)]
+        content = [grid(board, pastel)]
         content += ["", pastel.bold(status.center(STATUS_WIDTH))] if status
 
         TTY::Box.frame(content.join("\n"),
@@ -27,7 +27,7 @@ module TicTacToe
                        border: :thick, align: :center)
       end
 
-      def self.rows(board, pastel)
+      def self.grid(board, pastel)
         divider = "\n#{pastel.dim('───┼───┼───')}\n"
         board.rows.each_with_index.map do |row, r|
           row.each_with_index.map { |cell, c| glyph(cell, (r * Board::SIZE) + c, pastel) }
