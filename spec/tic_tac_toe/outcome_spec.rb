@@ -5,6 +5,23 @@ RSpec.describe TicTacToe::Outcome do
     moves.reduce(TicTacToe::Board.empty) { |b, (index, mark)| b.place(index, mark).value! }
   end
 
+  describe "the three kinds" do
+    it "won carries the winning Mark" do
+      expect(described_class.won(:o)).to have_attributes(kind: :won, mark: :o)
+    end
+
+    it "draw and in_progress carry no Mark" do
+      expect(described_class.draw).to have_attributes(kind: :draw, mark: nil)
+      expect(described_class.in_progress).to have_attributes(kind: :in_progress, mark: nil)
+    end
+
+    it "are distinct values" do
+      outcomes = [described_class.won(:x), described_class.won(:o), described_class.draw, described_class.in_progress]
+
+      expect(outcomes.uniq.size).to eq(4)
+    end
+  end
+
   describe ".of" do
     it "is in_progress on an empty Board" do
       expect(described_class.of(TicTacToe::Board.empty)).to eq(described_class.in_progress)
