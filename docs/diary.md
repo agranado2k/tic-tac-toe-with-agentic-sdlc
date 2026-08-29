@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | Versus-computer in flight on `feat/versus-computer` (#7): a Mode question before the first Frame, a Random Strategy playing O, "Computer plays N" after an injectable pause. Hot seat is complete as a product slice — one Frame repainted in place, number keys, Status line, Replay, Ctrl-C leaving quietly. Next: #8 (minimax + the Difficulty prompt + ADR-0003); `/dogfood` against the personas in `constitution/local-product.md` once the game is what PRD #2 describes. |
+| **Phase** | Both Modes playable: hot seat, and versus the computer with the Random Strategy (easy). One frame repainted in place, number keys, status line, Replay, quiet Ctrl-C. Next: #8 (Minimax, difficulty prompt, ADR-0003) — the last PRD #2 ticket. |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
-| **Last commit on `main`** | `1f7af30` — PR #13 squash: Ctrl-C quits quietly with status 130 (ticket #9) |
+| **Last commit on `main`** | `091b1d6` — PR #14 squash: versus-computer Mode with a Random Strategy (ticket #7) |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | `worktree/versus-computer` (`feat/versus-computer`, ticket #7). |
-| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6, #9 landed (PRs #10–#13); #7 is open as a PR; #8 is the last one. |
+| **Active worktrees** | None. |
+| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6, #7, #9 landed (PRs #10–#14); #8 is the last one. |
 
 ### Open questions / unresolved decisions
 
@@ -368,3 +368,14 @@ default — `::Random.new` mutated to `Random.new` (the same constant) and to
 working random source too. Timeouts swung between 23 and 49 across those runs
 with the code unchanged, so on this machine mutant's timeout count is a
 measure of load under eight parallel jobs, not a property of the suite.
+
+### 2026-08-29 — Ticket #7 landed (PR #14)
+
+The run opens with "Play against the computer?"; versus the computer the
+human is X and O comes from a Strategy — a core function of the Board, the
+Mark and its injected state, first implemented as Random over an injected
+source — with a "Computer plays N" status after an injectable 0.5 s pause.
+`/pr-iterate 14` applied all six review findings (Ctrl-C on the Mode question
+pinned, README brought back to reality, the Strategy wording corrected).
+Five behaviour questions stay on the PR for the owner, notably that Enter on
+the Mode question defaults to yes (versus computer).
