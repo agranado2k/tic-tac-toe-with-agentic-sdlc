@@ -26,6 +26,21 @@ module TicTacToe
 
         pastel.decorate(" #{GLYPH.fetch(cell)} ", :bold, COLOR.fetch(cell))
       end
+
+      # The question the shell asks the current Mark.
+      def self.question(mark)
+        "Where does #{GLYPH.fetch(mark)} go?"
+      end
+
+      # The line printed after the final frame. A plain case on the kind:
+      # mutant 0.16 cannot mutate a `case … in` pattern match, and a crash
+      # there aborts the whole run.
+      def self.announcement(outcome)
+        case outcome.kind
+        when :won then "#{GLYPH.fetch(outcome.mark)} wins"
+        when :draw then "Draw"
+        end
+      end
     end
   end
 end

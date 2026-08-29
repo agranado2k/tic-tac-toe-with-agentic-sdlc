@@ -3,37 +3,75 @@
 require "stringio"
 
 RSpec.describe TicTacToe::CLI do
+  let(:x_win) { [0, 3, 1, 4, 2] }
+  let(:o_win) { [0, 3, 1, 4, 8, 5] }
+  let(:draw) { [0, 1, 2, 4, 3, 5, 7, 6, 8] }
+
   describe ".run" do
-    let(:prompt) { instance_double(TTY::Prompt, select: 4) }
+    let(:prompt) { instance_double(TTY::Prompt) }
     let(:out) { StringIO.new }
+    let(:per_page) { TicTacToe::Board::CELL_COUNT }
 
-    it "places X in the chosen cell" do
-      board = described_class.run(prompt: prompt, out: out)
-
-      expect(board.cells).to eq([nil, nil, nil, nil, :x, nil, nil, nil, nil])
+    def script(*cells)
+      allow(prompt).to receive(:select).and_return(*cells)
     end
 
-    it "offers the empty cells to the prompt on one cycling page" do
+    it "plays a scripted X win in exactly five Moves and announces it" do
+      script(*x_win)
+
+      game = described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).to have_received(:select).exactly(5).times
+      expect(out.string).to end_with("X wins\n")
+      expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
+    end
+
+    it "plays a scripted O win and announces it" do
+      script(*o_win)
+
+      described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).to have_received(:select).exactly(6).times
+      expect(out.string).to end_with("O wins\n")
+    end
+
+    it "plays a scripted draw in exactly nine Moves and announces it" do
+      script(*draw)
+
+      described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).to have_received(:select).exactly(9).times
+      expect(out.string).to end_with("Draw\n")
+    end
+
+    it "asks the current Mark for a Cell, offering the empty Cells on one cycling page" do
+      script(*x_win)
+
       described_class.run(prompt: prompt, out: out)
 
       expect(prompt).to have_received(:select)
-        .with("Where does X go?", hash_including("Cell 1" => 0, "Cell 9" => 8),
-              cycle: true, per_page: TicTacToe::Board::CELL_COUNT)
+        .with("Where does X go?", hash_including("Cell 1" => 0, "Cell 9" => 8), cycle: true, per_page: per_page).once
+      expect(prompt).to have_received(:select)
+        .with("Where does O go?", hash_including("Cell 9" => 8), cycle: true, per_page: per_page).twice
+      expect(prompt).not_to have_received(:select).with("Where does O go?", hash_including("Cell 1" => 0), any_args)
     end
 
-    it "renders the board exactly twice: before and after the move" do
+    it "renders the Board once before each Move and once after the last" do
+      script(*x_win)
+
       described_class.run(prompt: prompt, out: out)
 
-      render = TicTacToe::UI::Renderer.method(:render)
-      expect(out.string).to eq(render[TicTacToe::Board.empty] + render[TicTacToe::Board.empty.place(4, :x).value!])
+      boards = (0..x_win.size).map do |n|
+        x_win.first(n).reduce(TicTacToe::Game.new_game) { |g, c| g.play(c).value! }.board
+      end
+      expect(out.string).to eq("#{boards.map { |b| TicTacToe::UI::Renderer.render(b) }.join}X wins\n")
     end
 
     it "builds its own prompt and writes to $stdout when given neither" do
       allow(TTY::Prompt).to receive(:new).and_return(prompt)
+      script(*x_win)
 
-      board = nil
-      expect { board = described_class.run }.to output(/Tic Tac Toe/).to_stdout
-      expect(board.cells[4]).to eq(:x)
+      expect { described_class.run }.to output(/X wins/).to_stdout
     end
   end
 

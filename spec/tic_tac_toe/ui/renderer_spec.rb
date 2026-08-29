@@ -33,6 +33,24 @@ RSpec.describe TicTacToe::UI::Renderer do
     end
   end
 
+  describe ".question" do
+    it "asks where the current Mark goes" do
+      expect(described_class.question(:x)).to eq("Where does X go?")
+      expect(described_class.question(:o)).to eq("Where does O go?")
+    end
+  end
+
+  describe ".announcement" do
+    it "names the winning Mark" do
+      expect(described_class.announcement(TicTacToe::Outcome.won(:x))).to eq("X wins")
+      expect(described_class.announcement(TicTacToe::Outcome.won(:o))).to eq("O wins")
+    end
+
+    it "names the draw" do
+      expect(described_class.announcement(TicTacToe::Outcome.draw)).to eq("Draw")
+    end
+  end
+
   describe ".glyph" do
     it "renders X bold cyan" do
       expect(described_class.glyph(:x, 0, colour)).to eq(colour.bold.cyan(" X "))
