@@ -21,15 +21,14 @@ module TicTacToe
       # play, and the centre is the one a player expects (ADR-0003 §4).
       PREFERENCE = [4, 0, 2, 6, 8, 1, 3, 5, 7].freeze
 
+      # The best-scoring available Cell; among equals, the earliest in
+      # PREFERENCE. The tie rule is spelled out in the sort key rather than
+      # left to what `max_by` happens to return first.
       def call(board, mark)
-        candidates(board).max_by { |cell| move_score(board, mark, cell, 1) }
+        board.available_cells.min_by { |cell| [-move_score(board, mark, cell, 1), PREFERENCE.index(cell)] }
       end
 
-      # The available Cells in preference order, so the first Cell holding the
-      # best score is the preferred one — which is the Cell `max_by` answers.
-      def candidates(board)
-        PREFERENCE & board.available_cells
-      end
+      private
 
       # What playing `cell` is worth to `mark`: whatever the Board it leaves is
       # worth to the opponent, negated — their gain is this Mark's loss.
