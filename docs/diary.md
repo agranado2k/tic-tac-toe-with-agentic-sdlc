@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | First game slice landed: a hot-seat game plays to "X wins" / "O wins" / "Draw" (`Game`, `Outcome`, the shell loop). Still print-per-move and arrow-key selection. Next: ticket #5 (number keys + status line). |
+| **Phase** | Hot-seat game landed (`Game`, `Outcome`, the shell loop). Ticket #5 — number-key input and the status line — is in review on `feat/number-key-input`. Still print-per-move; redraw in place is ticket #6. |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
 | **Last commit on `main`** | `0939fbb` — PR #10 squash: hot-seat game to a Winner or a draw (ticket #4) |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | None. |
-| **Spec status** | PRD #2 decomposed into tickets #4–#9 (chain #4→#5→#6→#7→#8, #9 off #6). #4 landed as PR #10; #5 is the frontier. |
+| **Active worktrees** | `worktree/number-key-input` (`feat/number-key-input`, ticket #5). |
+| **Spec status** | PRD #2 decomposed into tickets #4–#9 (chain #4→#5→#6→#7→#8, #9 off #6). #4 landed as PR #10; #5 is open for review; #6 is next. |
 
 ### Open questions / unresolved decisions
 
@@ -192,3 +192,33 @@ pruned; `main` is `0939fbb`. Found on the way: the AI-review workflow runs
 despite its `.example` name — GitHub registers every `.yml` — and only skips
 because no provider secret is set; and mutant 0.16 crashes on `case … in`
 pattern matching, so shell code uses `case … when` on the Outcome kind.
+
+### 2026-08-29 — Number keys replace the selection list; the frame gained a status line
+
+Ticket #5 (`feat/number-key-input`). The tracer bullet's arrow-key
+`TTY::Prompt#select` and its `choices_for` label-to-index mapping are gone. A
+Move is now one keypress read with `TTY::Prompt#keypress`; `CLI::CELL_KEYS`
+maps key `"1"` to Cell index 0 … `"9"` to index 8, the same numbers the
+Renderer already draws on the empty Cells.
+
+`Renderer.render` gained a `status:` input drawn inside the frame beneath the
+Board — the **Status line**, now a glossary term. It carries whose go it is,
+why a keypress was refused, and the announcement at the end, so
+`Renderer.question` ("Where does X go?") is gone: the frame is the question.
+Every status is padded to `STATUS_WIDTH` (the length of the longest one) and
+`TTY::Box` centres the content, so a re-ask does not resize the frame between
+Moves — worth having before ticket #6 redraws in place. The parameter landed in
+its own commit ahead of the shell change (shared invariant §10): with `status`
+omitted the frame is byte-identical to the old one.
+
+`CLI.advance` answers every keypress with a `[Game, status]` pair, so a refused
+Move re-asks instead of raising — this closes the `.value!`-on-the-public-seam
+finding PR #10 deferred here. A key that is not a Cell shows
+`"Not a Cell — press 1–9"`; a `Failure(:occupied)` shows `"Cell 5 is taken"`,
+naming the Cell 1-based as the player sees it.
+
+Found while writing the demo: when the keypress source is exhausted (`nil`,
+which is what a piped or closed stdin gives), `advance` treats `nil` as "not a
+Cell" and the loop re-asks forever. Harmless against a real TTY, where
+`keypress` blocks; recorded as a behaviour finding on the PR, and the natural
+home for the fix is ticket #6/#9's Ctrl-C and quit handling.

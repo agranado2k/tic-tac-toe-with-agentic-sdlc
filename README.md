@@ -30,9 +30,10 @@ git config core.hooksPath .githooks
 sh scripts/check.sh
 ```
 
-What exists today is a tracer bullet: the framed board renders, one move for X
-is taken through the prompt, and the board renders again. The full game arrives
-through the chain described below.
+What exists today is a hot-seat game: X and O alternate at one keyboard, a Move
+is one keypress `1`–`9`, and a status line inside the frame says who is to move,
+why a key was refused, and who won. A computer opponent and redraw-in-place
+arrive through the chain described below.
 
 ## How this repo is run
 

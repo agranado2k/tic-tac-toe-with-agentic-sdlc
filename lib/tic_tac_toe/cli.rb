@@ -7,29 +7,50 @@ module TicTacToe
   # calls into is a pure function over immutable values.
   #
   # Hot seat: X and O alternate at one keyboard until the Outcome is terminal.
-  # The Board is printed after every Move; in-place redraw is a later ticket.
+  # A Move is one keypress, 1-9; a key that is not a Cell and a Cell that is
+  # already taken both leave the Board alone and ask again, saying why in the
+  # status line. The Board is printed after every Move; in-place redraw is a
+  # later ticket.
   module CLI
+    # Key "1" names Cell index 0 … key "9" names Cell index 8 — the same
+    # numbers the Renderer draws on the empty Cells.
+    CELL_KEYS = (1..Board::CELL_COUNT).map(&:to_s).freeze
+
     def self.run(prompt: TTY::Prompt.new, out: $stdout)
       game = Game.new_game
-      out.puts UI::Renderer.render(game.board)
+      status = UI::Renderer.to_move(game.current_mark)
 
       until game.outcome.terminal?
-        game = game.play(ask_for_cell(prompt, game)).value!
-        out.puts UI::Renderer.render(game.board)
+        out.puts UI::Renderer.render(game.board, status: status)
+        key = prompt.keypress
+        break if key.nil? # the input stream is closed: leave rather than re-ask forever
+
+        game, status = advance(game, key)
       end
 
-      out.puts UI::Renderer.announcement(game.outcome)
+      out.puts UI::Renderer.render(game.board, status: UI::Renderer.announcement(game.outcome))
       game
     end
 
-    # The Prompt only offers empty Cells, so the Move it returns cannot fail.
-    def self.ask_for_cell(prompt, game)
-      prompt.select(UI::Renderer.question(game.current_mark), choices_for(game.board),
-                    cycle: true, per_page: Board::CELL_COUNT)
+    # The Game and the status line after one keypress: the Move played and the
+    # next Mark to move, or the Game untouched and the reason it was refused.
+    def self.advance(game, key)
+      cell = CELL_KEYS.index(key)
+      return [game, UI::Renderer::NOT_A_CELL] if cell.nil?
+
+      game.play(cell).either(
+        ->(played) { [played, UI::Renderer.to_move(played.current_mark)] },
+        ->(reason) { [game, refusal(game, cell, reason)] }
+      )
     end
 
-    def self.choices_for(board)
-      board.available_cells.to_h { |i| ["Cell #{i + 1}", i] }
+    # The status line for a refused Move, by the reason the Game gave.
+    def self.refusal(game, cell, reason)
+      case reason
+      when :occupied then UI::Renderer.occupied(cell)
+      when :game_over then UI::Renderer.announcement(game.outcome)
+      else UI::Renderer::NOT_A_CELL # :out_of_bounds — the key named no Cell
+      end
     end
   end
 end
