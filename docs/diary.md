@@ -23,10 +23,10 @@ is in flight. Do not restate the README.
 | **Phase** | Stack scaffolded on top of the kit: Ruby 3.4 + Bundler, functional core (`lib/tic_tac_toe/board.rb`), TTY-toolkit shell, RSpec + RuboCop, CI. One tracer bullet runs end to end (render → one move → render). No game loop yet. |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` — created empty, never pushed yet |
-| **Last commit on `main`** | see `git log -1` — the stack scaffold on top of the bootstrap |
+| **Last commit on `main`** | `f3f65f0` — PR #1 squash: mutant wired, specs hardened, review fixes |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | `worktree/mutation-testing` on `chore/mutation-testing` — mutant wired, tests hardened; awaiting PR + merge. |
-| **Spec status** | No spec yet. Next step is `/grill-me` for the full game (turns, win/draw detection, replay), then `/to-prd` → `/to-tickets`. |
+| **Active worktrees** | `worktree/name-the-tracker` on `docs/name-the-tracker` — PR #3, names GitHub Issues as the tracker; awaiting merge. |
+| **Spec status** | PRD published as GitHub issue #2 (2026-08-29) after `/grill-me`: hot-seat + versus computer (easy/hard), number-key input, in-place redraw, replay. `/to-tickets` in progress. |
 
 ### Open questions / unresolved decisions
 
@@ -37,8 +37,8 @@ mark **RESOLVED <date>:** in place when it is settled — deleting it loses the
 record that it was ever open.
 -->
 
-- Should the game get a computer opponent, and if so how strong (random / minimax)? Undecided; not in the tracer bullet. Decide during `/grill-me`.
-- Redraw in place (`tty-cursor`) vs. print a new board each move? Undecided; ADR-0002 leaves it open.
+- ~~Should the game get a computer opponent, and if so how strong (random / minimax)?~~ **RESOLVED 2026-08-29:** yes, selectable easy (random) / hard (minimax) — PRD #2.
+- ~~Redraw in place (`tty-cursor`) vs. print a new board each move?~~ **RESOLVED 2026-08-29:** redraw in place — PRD #2.
 
 ### Memory pointers for future-me
 
@@ -141,3 +141,19 @@ glyphs, the default `Pastel.new`. Specs added for each.
 Also found: RuboCop reads `AllCops/Exclude` from the topmost `.rubocop.yml`, so
 the root `worktree/**/*` exclude made it inspect 0 files inside a worktree. The
 pattern is now rooted at `Dir.pwd`.
+
+### 2026-08-29 — PR #1 landed by /merge-train; PRD #2 published
+
+`/review-pr` under `/pr-iterate` found one real bug in the mutation branch
+(a dead duplicate `TicTacToe::LINES` left by the constant move), an un-dimmed
+divider row, and a `$PWD` dependency in the RuboCop worktree exclude — all
+fixed in-branch; the owner accepted the behaviour confirm-list as-is, including
+the mixed refactor+behaviour commit. Squash-merged as `f3f65f0`; worktree
+pruned.
+
+`/grill-me` settled the game's shape and `/to-prd` published it as issue #2.
+The two open questions above are resolved by it. GitHub Issues is the tracker
+(PR #3 records that in the workflow article); `ready-for-agent` and `prd`
+labels exist on the repo. Upstream kit findings filed as agentic-sdlc #85
+(no mutation-tool decision at bootstrap) and #86 (skills invisible to the
+installing session).
