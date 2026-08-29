@@ -18,6 +18,10 @@ it repaints where it stands, so *within a game* a second board appearing below
 the first is a fault, not progress. A Replay is the one exception: it opens a
 fresh frame below the "Play again?" line.
 
+**Ctrl-C is how you leave.** At any prompt it quits the game quietly: exit
+status 130, no backtrace, and the frame that was on screen still on screen.
+Abandoning a game is not an error, so a stack trace in the terminal is a fault.
+
 ### PERSONAS — who is trying to do what
 
 | Persona | Goal | Enters at | Permission level | Surface |

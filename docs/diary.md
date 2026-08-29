@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | Hot-seat game complete as a product slice: one frame repainted in place, number keys, status line, Replay. Next: #9 (Ctrl-C quits quietly), then #7 (versus computer, random) and #8 (minimax). |
+| **Phase** | Hot seat complete as a product slice: one Frame repainted in place, number keys, Status line, Replay, and Ctrl-C leaving quietly. Next: #7 (versus computer, random), then #8 (minimax); `/dogfood` against the personas in `constitution/local-product.md` once the game is what PRD #2 describes. |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
 | **Last commit on `main`** | `7154da2` — PR #12 squash: redraw in place + Play again? (ticket #6) |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | None. |
-| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6 landed (PRs #10, #11, #12); #7 and #9 are the frontier, #8 after #7. |
+| **Active worktrees** | `worktree/ctrl-c-quits-quietly` — ticket #9, PR open. |
+| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6 landed (PRs #10, #11, #12); #9 is in review; #7 is the frontier, #8 after it. |
 
 ### Open questions / unresolved decisions
 
@@ -281,3 +281,35 @@ would have filed the Replay's own frame as a fault — now scoped to "within a
 game". Six behaviour questions (where a Replay frame lands, the abandoned-Game
 repaint, five new public shell functions, `yes?` defaulting to yes, no
 terminal-width detection, the tell's wording) stay on the PR for the owner.
+
+### 2026-08-29 — Ctrl-C quits quietly
+
+Ticket #9 (`feat/ctrl-c-quits-quietly`). Pressing Ctrl-C at a Prompt used to
+print a twenty-five frame Ruby backtrace over the Board and kill the process by
+signal. The Shell now rescues `Interrupt` once, at the outer edge of `CLI.run`,
+prints one blank line and ends the process with status 130 — 128 plus SIGINT,
+the status a shell reports for a program that took that signal.
+
+Two facts decided the shape, both read out of the installed gems rather than
+assumed. `tty-prompt`'s reader defaults to `interrupt: :error` and raises
+`TTY::Reader::InputInterrupt`, which is a subclass of `Interrupt`; and when the
+key lands while the terminal is *not* inside the reader's raw read, the terminal
+driver turns it into SIGINT and Ruby raises a bare `Interrupt` instead. Rescuing
+the parent covers both, and which one arrives is a race the player cannot see.
+
+Nothing is rescued inside `play_game`, so the interrupt skips `finish`: no
+rewind is emitted after it and the Frame on screen is the last one drawn. The
+core is untouched, and so is `bin/tic-tac-toe` — the exit lives in the Shell so
+that a spec can observe the status (`SystemExit#status`) without the process
+dying, which is what ticket #9 asked for.
+
+`spec/bin/tic_tac_toe_spec.rb` is a new file and, in practice, a new test tier:
+the binary driven through a real pseudo-terminal (`PTY.spawn`, with the Ctrl-C
+byte `0x03` written to it), asserting `exitstatus == 130` and that nothing
+matching a backtrace line reaches the screen. It costs about a third of a second
+and was red against `main` on both examples.
+
+Mutation: 1017 mutations, 27 alive, 21 timeouts, 97.34% coverage — against 998 /
+27 / 21 / 97.29% on `main` with the branch stashed. Every one of the 19 new
+mutations dies; the survivors are the pre-existing ones in `Board`, `Outcome`,
+`Renderer` and `CLI.advance` / `refusal` / `rewind_over`.
