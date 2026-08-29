@@ -402,6 +402,10 @@ at index 2, a flat win/draw/loss scorer picks index 2. And the enforcement is th
 **exhaustive property**, not the four examples: Minimax plays O against all
 **521** reachable sequences of X Moves and no Outcome is `won(:x)`.
 
+The article layer changed too: `constitution/local-product.md` gained a
+standing dogfood rule — on hard, a human win is a fault and a draw is the best
+result the surface should give — which every future `/dogfood` session loads.
+
 One thing the ticket did not anticipate and the ADR now carries as clause 4:
 "prefers the centre on an empty Board" is not something the search can deliver.
 Every opening draws under perfect play, so all nine Cells score 0 and the
