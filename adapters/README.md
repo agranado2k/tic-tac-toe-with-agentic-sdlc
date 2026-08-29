@@ -22,7 +22,6 @@ rather than inferring it from a regex example in a comment.
 
 | Adapter | For | Wires |
 | --- | --- | --- |
-| [`node-ts/`](node-ts/README.md) | A pnpm/TypeScript monorepo with Vitest | the TDD pairing guard's globs, `behavior-delta.sh`'s contract surfaces, a differential Stryker mutation diagnostic, and a promptfoo eval tier for agent-facing prompt surfaces |
 | [`claude-code/`](claude-code/README.md) | One agent harness, rather than one stack | where a resolved capability tier goes at spawn time, and how to fill in `scripts/agents.config.sh` |
 
 Note that the two adapters answer different *kinds* of question. `node-ts/` is a

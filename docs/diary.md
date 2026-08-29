@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | Just bootstrapped from the agentic-sdlc kit. Nothing built yet. |
-| **Repo** | `<path on disk>` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
-| **Remote** | `<git remote URL>` |
-| **Last commit on `main`** | `<sha>` — `<what it landed>` |
+| **Phase** | Stack scaffolded on top of the kit: Ruby 3.4 + Bundler, functional core (`lib/tic_tac_toe/board.rb`), TTY-toolkit shell, RSpec + RuboCop, CI. One tracer bullet runs end to end (render → one move → render). No game loop yet. |
+| **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
+| **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` — created empty, never pushed yet |
+| **Last commit on `main`** | see `git log -1` — the stack scaffold on top of the bootstrap |
 | **Deployed / live** | Nothing yet. |
 | **Active worktrees** | None. |
-| **Spec status** | No spec yet. |
+| **Spec status** | No spec yet. Next step is `/grill-me` for the full game (turns, win/draw detection, replay), then `/to-prd` → `/to-tickets`. |
 
 ### Open questions / unresolved decisions
 
@@ -37,7 +37,8 @@ mark **RESOLVED <date>:** in place when it is settled — deleting it loses the
 record that it was ever open.
 -->
 
-- _None yet._
+- Should the game get a computer opponent, and if so how strong (random / minimax)? Undecided; not in the tracer bullet. Decide during `/grill-me`.
+- Redraw in place (`tty-cursor`) vs. print a new board each move? Undecided; ADR-0002 leaves it open.
 
 ### Memory pointers for future-me
 
@@ -100,3 +101,24 @@ moving it forward when the kit does.
 
 First real decisions go in `docs/adr/`; first real progress goes below this
 line.
+
+### 2026-08-29 — Ruby stack scaffolded; two decisions recorded
+
+Same day as the bootstrap. The stack was chosen and wired in one pass:
+
+- **Ruby 3.4.10 via rbenv** (`.ruby-version`); system Ruby on the dev machine
+  is 2.6 and cannot run `Data.define`.
+- **ADR-0001** — functional core / imperative shell, `Data.define` values,
+  `dry-monads` Results. **ADR-0002** — the TTY toolkit (`tty-prompt`, `pastel`,
+  `tty-box`, `tty-cursor`, `tty-screen`) for the shell; Shopify `cli-ui`
+  considered and rejected. Gem versions and download counts were checked live
+  on rubygems.org before deciding.
+- Tracer bullet: `TicTacToe::Board` (place / winner / full?) with specs, a pure
+  `UI::Renderer`, and `CLI.run` taking one move. `bin/tic-tac-toe` runs it.
+- The three local articles are filled in and pointed at from `AGENTS.md`; the
+  TDD pairing guard is armed on `lib/`; tiers are mapped in
+  `scripts/agents.config.sh`; `adapters/node-ts/` removed (stack mismatch).
+- `.github/workflows/ruby.yml` runs RuboCop + RSpec in CI.
+
+Remote created on GitHub, deliberately not pushed — the first push is the
+owner's.

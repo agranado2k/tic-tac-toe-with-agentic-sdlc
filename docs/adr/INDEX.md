@@ -16,7 +16,8 @@ alone answers "what is currently binding?" without opening 40 files.
 
 | # | Title | Status |
 |---|---|---|
-| — | _No decisions recorded yet._ | — |
+| 0001 | [Adopt a functional core with an imperative shell](0001-functional-core-imperative-shell.md) | Accepted 2026-08-29 |
+| 0002 | [Adopt the TTY toolkit for terminal rendering and input](0002-tty-toolkit-for-the-terminal.md) | Accepted 2026-08-29 |
 
 ## Conventions
 

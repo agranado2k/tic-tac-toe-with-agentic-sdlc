@@ -100,19 +100,19 @@
 # ---------------------------------------------------------------------------
 # 1. PLANNER — decomposition, design, triage
 # ---------------------------------------------------------------------------
-AGENT_TIER_PLANNER=''
+AGENT_TIER_PLANNER='fable'
 
 # ---------------------------------------------------------------------------
 # 2. IMPLEMENTER — one ticket, test-first, through the seams
 # ---------------------------------------------------------------------------
-AGENT_TIER_IMPLEMENTER=''
+AGENT_TIER_IMPLEMENTER='opus'
 
 # ---------------------------------------------------------------------------
 # 3. MECHANICAL — checkable definition of done, no judgement required
 # ---------------------------------------------------------------------------
-AGENT_TIER_MECHANICAL=''
+AGENT_TIER_MECHANICAL='sonnet'
 
 # ---------------------------------------------------------------------------
 # 4. REVIEWER — adversarial reading of a finished diff, in fresh context
 # ---------------------------------------------------------------------------
-AGENT_TIER_REVIEWER=''
+AGENT_TIER_REVIEWER='opus'

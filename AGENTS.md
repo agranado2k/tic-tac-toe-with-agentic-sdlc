@@ -27,7 +27,7 @@ never edit a shim.
 2. **Test first** for any code change — red, green, refactor. Tests are the
    specification, not an afterthought (shared invariant §3). `/tdd` is that loop.
    This stack's test tiers, conventions, and the command that runs them live in
-   `constitution/local-engineering.md.template` until you fill it in.
+   `constitution/local-engineering.md`.
 3. **Tracer bullets, never horizontal layers.** Build a tiny end-to-end slice,
    seek feedback, expand from there (shared invariant §2). Multi-session builds
    get decomposed into tickets by `/to-tickets` **before** the first session
@@ -134,20 +134,14 @@ Load the article that covers what you are about to do — do not preload them al
   diff to diagrams drawn as SVG in HTML reports, never ASCII art. Load it
   before writing or reviewing code. **Shared layer** too (see `VERSION`), same
   terms as the invariants.
-- `constitution/local-engineering.md.template` — this stack: style, boundaries,
+- `constitution/local-engineering.md` — this stack: style, boundaries,
   test tiers, what this repo is *not*.
-- `constitution/local-workflow.md.template` — this repo's process: commits,
+- `constitution/local-workflow.md` — this repo's process: commits,
   merges, review, the docs-trigger matrix, the log protocol.
-- `constitution/local-product.md.template` — the product: who uses it, and
+- `constitution/local-product.md` — the product: who uses it, and
   through which surface. Small on purpose — it exists because `/dogfood` cannot
   run without a declared surface and a declared set of personas, and that is
   knowledge only this repo has.
-
-> **Kit note —** every `local-*` article above ships as a `.template` file
-> carrying double-brace marks. Fill the marks in, drop the `.template` suffix,
-> and change its pointer above to the `.md` path. The gate then holds them to the
-> same standard as this file: every path and command they name must exist, and
-> an article this root never points at is reported as unreachable.
 
 ## Project documentation
 
@@ -175,6 +169,15 @@ every session that loads it (shared invariant §8).
 does. It is not a routine task — read it when `VERSION` needs to change.
 
 ## Local rules
+
+- **Functional core, imperative shell.** Game rules are pure functions over
+  immutable `Data.define` values that return `Dry::Monads::Result`; only
+  `lib/tic_tac_toe/ui/` and `lib/tic_tac_toe/cli.rb` may print or read. The
+  reasoning and the rejected alternatives are in
+  `docs/adr/0001-functional-core-imperative-shell.md`; the stack detail is in
+  `constitution/local-engineering.md`.
+- **Run it as `bundle exec bin/tic-tac-toe`; test it as `bundle exec rspec`;
+  lint it as `bundle exec rubocop`.** All three green before a PR opens.
 
 ## The chain
 
@@ -211,7 +214,7 @@ binary, an API client, a tool client — before a human does, and hands what it
 hits to `/to-tickets` as candidate tickets. It fixes nothing itself, on purpose:
 a repair by the session that found the problem destroys the only independent
 reading anyone had of it. Its personas and surfaces are declared in
-`constitution/local-product.md.template`.
+`constitution/local-product.md`.
 
 ## Quick reference
 

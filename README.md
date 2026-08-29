@@ -2,26 +2,36 @@
 
 A functional-style tic-tac-toe game for the terminal, written in Ruby.
 
-<!--
-This README was stamped by the agentic-sdlc bootstrap on 2026-08-29. It
-describes the process scaffolding you inherited, because that is all that exists
-on day one. Replace the top half with what this project actually is as soon as
-there is something to say; keep the bottom half, which documents machinery that
-stays true.
--->
+Immutable `Data.define` values and `Dry::Monads::Result` in the core, the
+[TTY toolkit](https://ttytoolkit.org) (`tty-prompt`, `pastel`, `tty-box`) in a
+thin shell that is the only code allowed to print or read. The reasoning is in
+`docs/adr/`.
 
 ## Getting started
 
 ```sh
-# Clone, then wire the git hooks. Hook path is per-clone config and cannot be
-# committed, so every collaborator runs this once.
+# Ruby, as pinned in .ruby-version (rbenv reads the file)
+rbenv install
+bundle install
+
+# Play
+bundle exec bin/tic-tac-toe
+
+# Check
+bundle exec rspec
+bundle exec rubocop
+
+# Clone-time wiring: the git hooks. Hook path is per-clone config and cannot
+# be committed, so every collaborator runs this once.
 git config core.hooksPath .githooks
 
 # The docs gate. Runs automatically before every push.
 sh scripts/check.sh
 ```
 
-<!-- Add the real build/test/run commands here as soon as there is a stack. -->
+What exists today is a tracer bullet: the framed board renders, one move for X
+is taken through the prompt, and the board renders again. The full game arrives
+through the chain described below.
 
 ## How this repo is run
 

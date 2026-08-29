@@ -1,0 +1,10 @@
+# In-progress work lives in git worktrees under worktree/ (AGENTS.md hard rule 1).
+worktree/
+
+# Bundler / Ruby
+.bundle/
+vendor/bundle/
+coverage/
+*.gem
+
+.DS_Store

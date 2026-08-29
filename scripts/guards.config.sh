@@ -59,7 +59,7 @@
 #   GUARD_SOURCE_RE='^(packages/[^/]+/src/|apps/[^/]+/src/).*\.(ts|tsx|mjs)$'
 #   GUARD_SOURCE_RE='^(app|domain)/.*\.py$'
 #   GUARD_SOURCE_RE='^internal/.*\.go$'
-GUARD_SOURCE_RE=''
+GUARD_SOURCE_RE='^lib/.*\.rb$'
 
 # Paths that match SOURCE but must NOT count as source. The default carries the
 # two exclusions every project needs: the test files themselves (they match many

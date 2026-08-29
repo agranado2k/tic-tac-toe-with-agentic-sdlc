@@ -42,14 +42,32 @@ Keep definitions short enough to read in a session-start scan. When one needs a
 page of explanation, that page is an ADR and the entry points at it.
 -->
 
-## <Context name>
+## The game (`lib/tic_tac_toe/`)
 
-- **<Term>** — <what it is>. <Kind>. Ref: <ADR-NNNN>.
-  - _Avoid_: <near-synonym> (<why>).
+- **Board** — the 3×3 grid of nine Cells, as one immutable value. Value Object
+  (`Data.define`); not persisted. Ref: ADR-0001.
+  - _Avoid_: "grid", "state" (a Board is the whole game state today, but the
+    name says what it is, not what it is used for).
+- **Cell** — one position on the Board, indexed 0–8 in code and shown as 1–9
+  to the player. Holds a Mark or is empty (`nil`). Value.
+  - _Avoid_: "square", "slot", "position".
+- **Mark** — what a player puts in a Cell: `:x` or `:o`. Value. Ref: ADR-0001.
+  - _Avoid_: "symbol", "piece", "token".
+- **Move** — placing a Mark in an empty Cell; `Board#place` returns a
+  `Success(Board)` or a `Failure(reason)`. Pure transition. Ref: ADR-0001.
+  - _Avoid_: "turn" (a turn is whose go it is; a move is what they did).
+- **Line** — one of the eight winning sets of three Cells (rows, columns,
+  diagonals). Constant on `Board`.
+- **Winner** — the Mark holding a complete Line, or none. Derived, never stored.
 
-## <Second context name>
+## The terminal (`lib/tic_tac_toe/ui/`, `lib/tic_tac_toe/cli.rb`)
 
-- **<Term>** — <what it is>. <Kind>. Ref: <ADR-NNNN>.
+- **Renderer** — the pure function from a Board to the `String` the player
+  sees. Adapter (out). Ref: ADR-0002.
+- **Prompt** — the `TTY::Prompt` that asks the player for a Cell. Adapter (in).
+  Ref: ADR-0002.
+- **Shell** — `TicTacToe::CLI`, the only place that prints and reads.
+  Ref: ADR-0001.
 
 ---
 
@@ -61,4 +79,6 @@ the terms that are ambiguous here and are therefore banned. Each line names the
 banned word and the word to use instead.
 -->
 
-- **<banned word>** — ambiguous here (<why>). Use **<term>** or **<term>**.
+- **square / slot / position** — ambiguous here (position also means "board position" in game-tree talk). Use **Cell**.
+- **piece / token / symbol** — ambiguous here (symbol is also a Ruby type). Use **Mark**.
+- **turn** — ambiguous here (whose go vs. what they did). Use **Move** for the act; say "current Mark" for whose go it is.
