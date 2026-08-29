@@ -6,6 +6,9 @@ RSpec.describe TicTacToe::CLI do
   describe ".run" do
     let(:prompt) { instance_double(TTY::Prompt) }
     let(:out) { StringIO.new }
+    # Records what the Shell asked to wait for, without waiting.
+    let(:pause) { ->(seconds) { paused << seconds } }
+    let(:paused) { [] }
 
     before { allow(prompt).to receive(:yes?).and_return(false) }
 
@@ -197,8 +200,6 @@ RSpec.describe TicTacToe::CLI do
     # random source is injected, so "the first available Cell" is what the
     # computer plays in every example below and the frames are exact.
     context "in versus-computer Mode" do
-      let(:pause) { ->(seconds) { paused << seconds } }
-      let(:paused) { [] }
       let(:lowest_cell) { instance_double(Random, rand: 0) }
 
       before { allow(prompt).to receive(:yes?).with(described_class::MODE_QUESTION).and_return(true) }
@@ -289,9 +290,8 @@ RSpec.describe TicTacToe::CLI do
 
     it "never pauses in hot seat, where every Move is a keypress" do
       script(*%w[1 4 2 5 3])
-      paused = []
 
-      described_class.run(prompt: prompt, out: out, pause: ->(seconds) { paused << seconds })
+      described_class.run(prompt: prompt, out: out, pause: pause)
 
       expect(paused).to be_empty
     end
@@ -311,6 +311,14 @@ RSpec.describe TicTacToe::CLI do
       def script_then_interrupt(*keys)
         interrupt = -> { raise TTY::Reader::InputInterrupt }
         allow(prompt).to receive(:keypress).and_invoke(*keys.map { |key| -> { key } }, interrupt)
+      end
+
+      it "ends with exit status 130 when the interrupt lands on the Mode question" do
+        allow(prompt).to receive(:yes?).with(described_class::MODE_QUESTION).and_raise(Interrupt)
+
+        expect { described_class.run(prompt: prompt, out: out) }
+          .to raise_error(SystemExit) { |quit| expect(quit.status).to eq(130) }
+        expect(out.string).to eq("\n")
       end
 
       it "ends with exit status 130 when the interrupt lands on a Cell keypress" do
@@ -388,7 +396,7 @@ RSpec.describe TicTacToe::CLI do
 
       described_class.computer_move(game_after(4), ->(*) { 0 }, ->(seconds) { waited << seconds })
 
-      expect(waited).to eq([described_class::COMPUTER_PAUSE_SECONDS])
+      expect(waited).to eq([0.5])
     end
   end
 
