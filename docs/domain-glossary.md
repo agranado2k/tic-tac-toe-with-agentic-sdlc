@@ -71,9 +71,11 @@ page of explanation, that page is an ADR and the entry points at it.
   Value Object (`Data.define`). Ref: ADR-0001, PRD #2.
   - _Avoid_: "result" (a `Dry::Monads::Result` is a different thing here),
     "status", "end state".
-- **Strategy** — the pure function a computer opponent is: a Board and the Mark
-  to move in, the Cell index it chooses out. A value answering `#call(board,
-  mark)`, so the Shell can hold one and hand it the Board each go. **Random** is
+- **Strategy** — the function a computer opponent is: a Board and the Mark to
+  move in, the Cell index it chooses out — a function of those two and of the
+  state injected into it (Random's source), never of anything global. A value
+  answering `#call(board, mark)`, so the Shell can hold one and hand it the
+  Board each go. **Random** is
   the first implementation — any available Cell, uniformly, drawn from an
   injected random source so nothing in the core reaches for global randomness;
   Minimax is the second. Ref: ADR-0001, PRD #2.
