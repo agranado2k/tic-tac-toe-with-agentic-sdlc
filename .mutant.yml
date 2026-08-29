@@ -12,4 +12,3 @@ matcher:
     - TicTacToe*
 coverage_criteria:
   process_abort: true
-  timeout: true
