@@ -23,10 +23,10 @@ is in flight. Do not restate the README.
 | **Phase** | Hot seat complete as a product slice: one Frame repainted in place, number keys, Status line, Replay, and Ctrl-C leaving quietly. Next: #7 (versus computer, random), then #8 (minimax); `/dogfood` against the personas in `constitution/local-product.md` once the game is what PRD #2 describes. |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
-| **Last commit on `main`** | `7154da2` — PR #12 squash: redraw in place + Play again? (ticket #6) |
+| **Last commit on `main`** | `1f7af30` — PR #13 squash: Ctrl-C quits quietly with status 130 (ticket #9) |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | `worktree/ctrl-c-quits-quietly` — ticket #9, PR open. |
-| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6 landed (PRs #10, #11, #12); #9 is in review; #7 is the frontier, #8 after it. |
+| **Active worktrees** | None. |
+| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6, #9 landed (PRs #10–#13); #7 is the frontier, #8 after it. |
 
 ### Open questions / unresolved decisions
 
@@ -314,3 +314,13 @@ Mutation: 1017 mutations, 27 alive, 21 timeouts, 97.34% coverage — against 998
 27 / 21 / 97.29% on `main` with the branch stashed. Every one of the 19 new
 mutations dies; the survivors are the pre-existing ones in `Board`, `Outcome`,
 `Renderer` and `CLI.advance` / `refusal` / `rewind_over`.
+
+### 2026-08-29 — Ticket #9 landed (PR #13)
+
+Ctrl-C at any Prompt now leaves the Frame on screen, prints one blank line
+and ends with status 130 — no backtrace. The review caught the branch adding
+an automated pseudo-terminal spec of the binary against PRD #2's decision
+that the binary is exercised by `/dogfood` only; the spec was removed and the
+pty run kept as demo evidence. Open for the owner on the PR: whether the
+`exit` should move from `CLI.run` to `bin/tic-tac-toe`, and the rescue being
+`Interrupt` rather than only the reader's `InputInterrupt`.
