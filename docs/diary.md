@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | Hot-seat game with number-key input (1–9), re-ask on a bad key or taken Cell, a status line inside the frame, one frame repainted in place per game, and "Play again?" at the end. Next: ticket #7 (versus-computer Mode with the Random Strategy). |
+| **Phase** | Hot-seat game complete as a product slice: one frame repainted in place, number keys, status line, Replay. Next: #9 (Ctrl-C quits quietly), then #7 (versus computer, random) and #8 (minimax). |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
-| **Last commit on `main`** | `85646c2` — PR #11 squash: number-key input with re-ask and a status line (ticket #5) |
+| **Last commit on `main`** | `7154da2` — PR #12 squash: redraw in place + Play again? (ticket #6) |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | `worktree/redraw-and-replay` (`feat/redraw-and-replay`, ticket #6) — open PR. |
-| **Spec status** | PRD #2 → tickets #4–#9. #4 (PR #10) and #5 (PR #11) landed; #6 is in review; then #7 → #8, with #9 off #6. |
+| **Active worktrees** | None. |
+| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6 landed (PRs #10, #11, #12); #7 and #9 are the frontier, #8 after #7. |
 
 ### Open questions / unresolved decisions
 
@@ -270,3 +270,14 @@ Mutation: 27 alive / 18 timeouts / 97.35% coverage over 1019 mutations, against
 23 alive / 11 timeouts / 97.35% over 869 on `main`. All four new survivors are
 in `CLI.rewind_over` and all four are equivalent — `Array#count`/`length`/`size`
 on the same array, and `TTY::Cursor.column(1)` versus its default argument.
+
+### 2026-08-29 — Ticket #6 landed (PR #12)
+
+The Shell now repaints one frame in place (`tty-cursor`: up 9, column 1,
+clear down) and asks "Play again?" once per finished Game; a Replay opens a
+fresh frame below the question. `/pr-iterate 12` applied all eight review
+findings, the notable one being a dogfood tell in `local-product.md` that
+would have filed the Replay's own frame as a fault — now scoped to "within a
+game". Six behaviour questions (where a Replay frame lands, the abandoned-Game
+repaint, five new public shell functions, `yes?` defaulting to yes, no
+terminal-width detection, the tell's wording) stay on the PR for the owner.
