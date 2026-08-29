@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | PRD #2 is feature-complete once #8 lands: hot seat, and versus the computer at either Difficulty — easy (Random) or hard (Minimax, which never loses). One frame repainted in place, number keys, status line, Replay, quiet Ctrl-C. Next: `/dogfood` against the three personas. |
+| **Phase** | **PRD #2 is feature-complete.** Hot seat or versus the computer at easy (Random) or hard (Minimax, never loses); one frame repainted in place, keys 1–9, status line, Replay, quiet Ctrl-C. Next step: `/dogfood` against the personas in `constitution/local-product.md`, then `/to-tickets` for what it finds. |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
-| **Last commit on `main`** | `619496b` — the diary entry for PR #14; ticket #8 is in flight on `feat/minimax` |
+| **Last commit on `main`** | `541fcb2` — PR #15 squash: hard Difficulty with a Minimax Strategy (ticket #8) |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | `worktree/minimax` (`feat/minimax`, ticket #8). |
-| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6, #7, #9 landed (PRs #10–#14); #8 is open on a PR and is the last one. |
+| **Active worktrees** | None. |
+| **Spec status** | PRD #2 → tickets #4–#9, all landed (PRs #10–#15). The PRD issue stays open until the owner closes it after `/dogfood`. Behaviour confirm-lists on each PR await the owner's answers. |
 
 ### Open questions / unresolved decisions
 
@@ -437,3 +437,19 @@ less than it claims to.
 no Difficulty means hot seat, which is the same absent Strategy the loop
 already understood — so the change stops at the routing and `play_game` is
 untouched.
+
+### 2026-08-29 — Ticket #8 landed (PR #15); PRD #2 complete
+
+The last slice: "Unbeatable computer?" after the Mode question, carried
+through Replay; `Strategy::Minimax` (ADR-0003: full-depth, depth-aware
+scores, no pruning or cache) proved by the exhaustive property that O never
+loses across all 521 reachable X sequences. `/pr-iterate 15` applied all five
+review findings — `Minimax` now publishes `call` alone, the tie rule is an
+explicit sort key, and the forced-loss delay and corner-before-edge preference
+are pinned behaviourally. Mutant at 97.9%.
+
+Six tickets, six PRs, six review loops, all merged under the owner's standing
+"merge-train after each ticket" authorization for this run. What the owner
+still holds: the behaviour confirm-lists on PRs #10–#15 (wording, defaults
+such as Enter meaning "yes" on both questions, where the Ctrl-C `exit` lives),
+and the by-hand end-to-end games each ticket reserved for a person.
