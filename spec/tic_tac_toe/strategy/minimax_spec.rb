@@ -43,33 +43,35 @@ RSpec.describe TicTacToe::Strategy::Minimax do
 
       expect(minimax.call(board, :x)).to eq(8)
     end
-  end
 
-  # The property the whole decision rests on: not the examples above, but every
-  # line of play the human can choose (ADR-0003 §5).
-  describe "playing O against every reachable sequence of X Moves" do
-    # One Outcome per complete line of play: X branches over every available
-    # Cell, Minimax answers each branch, until the Game is over.
-    def outcomes_below(game)
-      return [game.outcome] if game.outcome.terminal?
+    # The property the whole decision rests on: not the examples above, but
+    # every line of play the human can choose (ADR-0003 §5). It sits inside
+    # this group so that mutant selects it against every mutation of #call —
+    # an enforcement clause the mutation run does not reach enforces less.
+    describe "playing O against every reachable sequence of X Moves" do
+      # One Outcome per complete line of play: X branches over every available
+      # Cell, Minimax answers each branch, until the Game is over.
+      def outcomes_below(game)
+        return [game.outcome] if game.outcome.terminal?
 
-      game.board.available_cells.flat_map { |cell| outcomes_below(answered(game.play(cell).value!)) }
-    end
+        game.board.available_cells.flat_map { |cell| outcomes_below(answered(game.play(cell).value!)) }
+      end
 
-    # The Game after Minimax has taken O's go, or the Game as it stands if X
-    # just ended it.
-    def answered(game)
-      return game if game.outcome.terminal?
+      # The Game after Minimax has taken O's go, or the Game as it stands if X
+      # just ended it.
+      def answered(game)
+        return game if game.outcome.terminal?
 
-      game.play(minimax.call(game.board, :o)).value!
-    end
+        game.play(minimax.call(game.board, :o)).value!
+      end
 
-    it "never loses" do
-      outcomes = outcomes_below(TicTacToe::Game.new_game)
+      it "never loses" do
+        outcomes = outcomes_below(TicTacToe::Game.new_game)
 
-      expect(outcomes).not_to include(TicTacToe::Outcome.won(:x))
-      # The walk itself is worth pinning: an empty one proves nothing.
-      expect(outcomes.size).to eq(521)
+        expect(outcomes).not_to include(TicTacToe::Outcome.won(:x))
+        # The walk itself is worth pinning: an empty one proves nothing.
+        expect(outcomes.size).to eq(521)
+      end
     end
   end
 
