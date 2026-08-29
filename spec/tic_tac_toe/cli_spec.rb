@@ -199,6 +199,51 @@ RSpec.describe TicTacToe::CLI do
 
       expect { described_class.run }.to output(/X wins/).to_stdout
     end
+
+    # Ctrl-C reaches the Shell as an Interrupt either way: tty-prompt's reader
+    # raises its own InputInterrupt when the key lands inside a raw read
+    # (`interrupt: :error`, its default), and the terminal driver turns it into
+    # a SIGINT — a bare Interrupt — when it lands anywhere else.
+    context "when Ctrl-C interrupts a Prompt" do
+      def script_then_interrupt(*keys)
+        interrupt = -> { raise TTY::Reader::InputInterrupt }
+        allow(prompt).to receive(:keypress).and_invoke(*keys.map { |key| -> { key } }, interrupt)
+      end
+
+      it "ends with exit status 130 when the interrupt lands on a Cell keypress" do
+        script_then_interrupt("5")
+
+        expect { described_class.run(prompt: prompt, out: out) }
+          .to raise_error(SystemExit) { |quit| expect(quit.status).to eq(130) }
+      end
+
+      it "leaves the Frame it last drew on screen, followed by one blank line" do
+        script_then_interrupt("5")
+
+        expect { described_class.run(prompt: prompt, out: out) }.to raise_error(SystemExit)
+
+        renderer = TicTacToe::UI::Renderer
+        asking = renderer.render(TicTacToe::Board.empty, status: renderer.to_move(:x))
+        played = renderer.render(game_after(4).board, status: renderer.to_move(:o))
+        expect(out.string).to eq("#{in_place([asking, played])}\n")
+      end
+
+      it "ends with exit status 130 when a SIGINT lands on Play again?" do
+        script(*x_win_keys)
+        allow(prompt).to receive(:yes?).and_raise(Interrupt)
+
+        expect { described_class.run(prompt: prompt, out: out) }
+          .to raise_error(SystemExit) { |quit| expect(quit.status).to eq(130) }
+
+        expect(out.string).to eq("#{in_place(x_win_frames)}\n")
+      end
+
+      it "returns rather than exiting when the answer to Play again? is No" do
+        script(*x_win_keys)
+
+        expect { described_class.run(prompt: prompt, out: out) }.not_to raise_error
+      end
+    end
   end
 
   describe ".advance" do
