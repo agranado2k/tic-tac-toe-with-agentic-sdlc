@@ -8,3 +8,6 @@ coverage/
 *.gem
 
 .DS_Store
+
+# mutant session results (regenerated on every run)
+.mutant/
