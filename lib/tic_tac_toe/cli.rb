@@ -17,8 +17,20 @@ module TicTacToe
     # numbers the Renderer draws on the empty Cells.
     CELL_KEYS = (1..Board::CELL_COUNT).map(&:to_s).freeze
 
+    # The question a finished Game ends on.
+    PLAY_AGAIN = "Play again?"
+
     def self.run(prompt: TTY::Prompt.new, out: $stdout)
-      play_game(prompt, out)
+      game = play_game(prompt, out)
+      game = play_game(prompt, out) while replay?(prompt, game)
+      game
+    end
+
+    # A rematch is offered by a finished Game only, and asked exactly once.
+    # It restarts with the settings this loop carries; today hot seat is the
+    # only Mode, so a fresh Game is the whole of "the same settings".
+    def self.replay?(prompt, game)
+      game.outcome.terminal? && prompt.yes?(PLAY_AGAIN)
     end
 
     # One Game, drawn into a single frame that is repainted in place after

@@ -8,8 +8,27 @@ RSpec.describe TicTacToe::CLI do
     let(:prompt) { instance_double(TTY::Prompt) }
     let(:out) { StringIO.new }
 
+    before { allow(prompt).to receive(:yes?).and_return(false) }
+
     def script(*keys)
       allow(prompt).to receive(:keypress).and_return(*keys)
+    end
+
+    # The keys of one scripted X win, and the frames it draws: one per Move,
+    # then the announcement.
+    def x_win_keys
+      %w[1 4 2 5 3]
+    end
+
+    def x_win_games
+      (0..x_win_keys.size).map { |n| game_after(*x_win_keys.first(n).map { |k| k.to_i - 1 }) }
+    end
+
+    def x_win_frames
+      renderer = TicTacToe::UI::Renderer
+      games = x_win_games
+      asking = games[0...-1].map { |g| renderer.render(g.board, status: renderer.to_move(g.current_mark)) }
+      asking + [renderer.render(games.last.board, status: "X wins")]
     end
 
     # The bytes that put the cursor back at the top-left of a frame just
@@ -108,19 +127,43 @@ RSpec.describe TicTacToe::CLI do
     end
 
     it "plays a scripted X win in five keypresses, one frame each plus the announcement" do
-      keys = %w[1 4 2 5 3]
-      script(*keys)
+      script(*x_win_keys)
 
       game = described_class.run(prompt: prompt, out: out)
 
-      games = (0..keys.size).map { |n| game_after(*keys.first(n).map { |k| k.to_i - 1 }) }
-      frames = games[0...-1].map do |g|
-        TicTacToe::UI::Renderer.render(g.board, status: TicTacToe::UI::Renderer.to_move(g.current_mark))
-      end
-      frames << TicTacToe::UI::Renderer.render(games.last.board, status: "X wins")
       expect(prompt).to have_received(:keypress).exactly(5).times
       expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
-      expect(out.string).to eq(in_place(frames))
+      expect(out.string).to eq(in_place(x_win_frames))
+    end
+
+    it "offers Play again? after a finished Game, and returns when the answer is no" do
+      script(*x_win_keys)
+
+      game = described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).to have_received(:yes?).with("Play again?").once
+      expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
+      expect(out.string).to end_with(x_win_frames.last)
+    end
+
+    it "plays a fresh Game below the last frame when the answer is yes, and asks again after it" do
+      script(*(x_win_keys * 2))
+      allow(prompt).to receive(:yes?).and_return(true, false)
+
+      game = described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).to have_received(:keypress).exactly(10).times
+      expect(prompt).to have_received(:yes?).twice
+      expect(game).to eq(game_after(0, 3, 1, 4, 2))
+      expect(out.string).to eq(in_place(x_win_frames) * 2)
+    end
+
+    it "does not offer Play again? for a Game abandoned when the input stream closed" do
+      script("5", nil)
+
+      described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).not_to have_received(:yes?)
     end
 
     it "leaves when the input stream is closed instead of re-asking forever" do
