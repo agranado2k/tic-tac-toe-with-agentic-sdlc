@@ -6,6 +6,7 @@ require_relative "tic_tac_toe/board"
 require_relative "tic_tac_toe/outcome"
 require_relative "tic_tac_toe/game"
 require_relative "tic_tac_toe/strategy/random"
+require_relative "tic_tac_toe/strategy/minimax"
 require_relative "tic_tac_toe/ui/renderer"
 require_relative "tic_tac_toe/cli"
 

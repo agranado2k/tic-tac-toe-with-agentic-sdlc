@@ -29,6 +29,12 @@ module TicTacToe
     HOT_SEAT = :hot_seat
     VERSUS_COMPUTER = :versus_computer
 
+    # The Difficulty question, asked once per run and only where a Strategy
+    # will play. Another yes/no, for the same reason the Mode question is one.
+    DIFFICULTY_QUESTION = "Unbeatable computer?"
+    EASY = :easy
+    HARD = :hard
+
     # Versus the computer the human is X and opens, so the Strategy plays O
     # (PRD #2 user story 3).
     COMPUTER_MARK = :o
@@ -42,10 +48,11 @@ module TicTacToe
     EXIT_INTERRUPTED = 130
 
     # A Replay is offered by a finished Game only, and asked exactly once. It
-    # restarts with the settings this loop carries — the Mode, chosen before
-    # the first Game and never asked again.
+    # restarts with the settings this loop carries — the Mode and the
+    # Difficulty, both chosen before the first Game and never asked again.
     def self.run(prompt: TTY::Prompt.new, out: $stdout, pause: PAUSE, random: ::Random.new)
-      strategy = computer_strategy(ask_mode(prompt), random)
+      mode = ask_mode(prompt)
+      strategy = computer_strategy(ask_difficulty(prompt, mode), random)
 
       loop do
         game = play_game(prompt, out, strategy, pause)
@@ -60,13 +67,24 @@ module TicTacToe
       prompt.yes?(MODE_QUESTION) ? VERSUS_COMPUTER : HOT_SEAT
     end
 
-    # The Strategy that plays the computer's Mark, or nil in hot seat where
-    # every Move is a keypress. This is the whole of the loop's routing: a
-    # second Strategy is chosen here and nothing below changes.
-    def self.computer_strategy(mode, random)
+    # The Difficulty this run plays at, or none in hot seat — where no Strategy
+    # plays, so the question would be asking the player to choose between two
+    # opponents they are not going to meet.
+    def self.ask_difficulty(prompt, mode)
       return nil unless mode == VERSUS_COMPUTER
 
-      Strategy::Random.new(source: random)
+      prompt.yes?(DIFFICULTY_QUESTION) ? HARD : EASY
+    end
+
+    # The Strategy that plays the computer's Mark, by the Difficulty chosen for
+    # it — and none where none was chosen, which is hot seat, where every Move
+    # is a keypress. This is the whole of the loop's routing: nothing below
+    # here knows which Strategy it is holding.
+    def self.computer_strategy(difficulty, random)
+      case difficulty
+      when HARD then Strategy::Minimax.new
+      when EASY then Strategy::Random.new(source: random)
+      end
     end
 
     # Ctrl-C at any Prompt: leave the Frame exactly where it is — nothing is

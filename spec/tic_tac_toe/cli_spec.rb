@@ -262,6 +262,51 @@ RSpec.describe TicTacToe::CLI do
         expect(paused).to eq([0.5] * 4)
       end
 
+      it "asks the Difficulty once, after the Mode question" do
+        play("5", nil)
+
+        expect(prompt).to have_received(:yes?).with(described_class::DIFFICULTY_QUESTION).once
+      end
+
+      it "keeps the Difficulty over a Replay without asking for it again" do
+        allow(prompt).to receive(:yes?).with(described_class::PLAY_AGAIN).and_return(true, false)
+
+        play(*(%w[5 2 8] * 2))
+
+        expect(prompt).to have_received(:yes?).with(described_class::DIFFICULTY_QUESTION).once
+      end
+
+      # On hard the Cell O takes is Minimax's, and the injected random source
+      # is never drawn from — the two Strategies disagree from the first Move.
+      context "on the hard Difficulty" do
+        before { allow(prompt).to receive(:yes?).with(described_class::DIFFICULTY_QUESTION).and_return(true) }
+
+        it "answers a corner opening with the centre, where Random would take the first free Cell" do
+          play("1", nil)
+
+          expect(out.string).to include("Computer plays 5")
+          expect(lowest_cell).not_to have_received(:rand)
+        end
+
+        it "blocks the Line the human is one Cell from completing" do
+          play("1", "2", nil)
+
+          expect(out.string).to include("Computer plays 3")
+        end
+
+        it "punishes the corner fork a careless O loses to" do
+          game = play(*%w[1 9 3 7 8])
+
+          expect(game.outcome).to eq(TicTacToe::Outcome.won(:o))
+        end
+
+        it "concedes the draw a human who plays perfectly earns, and no more" do
+          game = play(*%w[5 3 4 9 8])
+
+          expect(game.outcome).to eq(TicTacToe::Outcome.draw)
+        end
+      end
+
       it "refuses a Cell the computer took, naming it, and asks the human again" do
         play("5", "1", "2", nil)
 
@@ -286,6 +331,14 @@ RSpec.describe TicTacToe::CLI do
       described_class.run(prompt: prompt, out: out)
 
       expect(prompt).to have_received(:yes?).with(described_class::MODE_QUESTION).once
+    end
+
+    it "never asks the Difficulty in hot seat, where no Strategy plays" do
+      script("5", nil)
+
+      described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).not_to have_received(:yes?).with(described_class::DIFFICULTY_QUESTION)
     end
 
     it "never pauses in hot seat, where every Move is a keypress" do
@@ -364,6 +417,49 @@ RSpec.describe TicTacToe::CLI do
       allow(prompt).to receive(:yes?).with(described_class::MODE_QUESTION).and_return(false)
 
       expect(described_class.ask_mode(prompt)).to eq(described_class::HOT_SEAT)
+    end
+  end
+
+  describe ".ask_difficulty" do
+    let(:prompt) { instance_double(TTY::Prompt) }
+
+    it "names the hard Difficulty when the answer is yes" do
+      allow(prompt).to receive(:yes?).with(described_class::DIFFICULTY_QUESTION).and_return(true)
+
+      expect(described_class.ask_difficulty(prompt, described_class::VERSUS_COMPUTER))
+        .to eq(described_class::HARD)
+    end
+
+    it "names the easy Difficulty when the answer is no" do
+      allow(prompt).to receive(:yes?).with(described_class::DIFFICULTY_QUESTION).and_return(false)
+
+      expect(described_class.ask_difficulty(prompt, described_class::VERSUS_COMPUTER))
+        .to eq(described_class::EASY)
+    end
+
+    it "names no Difficulty in hot seat, and does not ask" do
+      allow(prompt).to receive(:yes?)
+
+      expect(described_class.ask_difficulty(prompt, described_class::HOT_SEAT)).to be_nil
+      expect(prompt).not_to have_received(:yes?)
+    end
+  end
+
+  describe ".computer_strategy" do
+    let(:random) { instance_double(Random) }
+
+    it "plays the hard Difficulty with Minimax" do
+      expect(described_class.computer_strategy(described_class::HARD, random))
+        .to eq(TicTacToe::Strategy::Minimax.new)
+    end
+
+    it "plays the easy Difficulty with Random over the injected source" do
+      expect(described_class.computer_strategy(described_class::EASY, random))
+        .to eq(TicTacToe::Strategy::Random.new(source: random))
+    end
+
+    it "has no Strategy where no Difficulty was chosen" do
+      expect(described_class.computer_strategy(nil, random)).to be_nil
     end
   end
 

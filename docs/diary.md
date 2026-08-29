@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | Both Modes playable: hot seat, and versus the computer with the Random Strategy (easy). One frame repainted in place, number keys, status line, Replay, quiet Ctrl-C. Next: #8 (Minimax, difficulty prompt, ADR-0003) — the last PRD #2 ticket. |
+| **Phase** | PRD #2 is feature-complete once #8 lands: hot seat, and versus the computer at either Difficulty — easy (Random) or hard (Minimax, which never loses). One frame repainted in place, number keys, status line, Replay, quiet Ctrl-C. Next: `/dogfood` against the three personas. |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
-| **Last commit on `main`** | `091b1d6` — PR #14 squash: versus-computer Mode with a Random Strategy (ticket #7) |
+| **Last commit on `main`** | `619496b` — the diary entry for PR #14; ticket #8 is in flight on `feat/minimax` |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | None. |
-| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6, #7, #9 landed (PRs #10–#14); #8 is the last one. |
+| **Active worktrees** | `worktree/minimax` (`feat/minimax`, ticket #8). |
+| **Spec status** | PRD #2 → tickets #4–#9. #4, #5, #6, #7, #9 landed (PRs #10–#14); #8 is open on a PR and is the last one. |
 
 ### Open questions / unresolved decisions
 
@@ -52,6 +52,9 @@ The half-dozen facts you keep re-learning. Not documentation — pointers at it.
   is the contract and the diary is the log.
 - **Decisions live in `docs/adr/`**, not here. A diary entry may *announce* a
   decision, but the ADR is the record.
+- **Minimax is deliberately unoptimised** (ADR-0003). Before "improving" it with
+  pruning or a cache, read the record: both were considered and rejected, and
+  the exhaustive property is what the simplicity buys.
 - **Terms live in `docs/domain-glossary.md`.** One name per concept, everywhere.
 
 ### Update protocol
@@ -379,3 +382,58 @@ source — with a "Computer plays N" status after an injectable 0.5 s pause.
 pinned, README brought back to reality, the Strategy wording corrected).
 Five behaviour questions stay on the PR for the owner, notably that Enter on
 the Mode question defaults to yes (versus computer).
+
+### 2026-08-29 — ADR-0003: an unbeatable computer, and the Difficulty that asks for it
+
+Ticket #8, the last of PRD #2. Choosing the computer now brings a second
+yes/no — "Unbeatable computer?" — and the answer becomes a **Difficulty**,
+`:easy` or `:hard`, which the Shell carries beside the Mode for the whole run
+and never asks again, a Replay included. Hot seat is not asked it at all.
+
+**ADR-0003** records the Minimax decision, written before the code as the ADR
+index asks: full-depth search over the immutable Board, **no pruning and no
+memoisation**, with alpha-beta, a transposition table, the Newell–Simon rule
+table and a precomputed lookup all recorded with the reason each loses on a
+3×3 board. Two clauses are the ones to remember. Scores are **depth-aware** —
+a win is worth `CELL_COUNT + 1` minus the Moves it took — which is the whole
+of "play looks purposeful", and the first spec proves it discriminates: on a
+Board where O can win now at Cell index 5 or force the same win one Move later
+at index 2, a flat win/draw/loss scorer picks index 2. And the enforcement is the
+**exhaustive property**, not the four examples: Minimax plays O against all
+**521** reachable sequences of X Moves and no Outcome is `won(:x)`.
+
+The article layer changed too: `constitution/local-product.md` gained a
+standing dogfood rule — on hard, a human win is a fault and a draw is the best
+result the surface should give — which every future `/dogfood` session loads.
+
+One thing the ticket did not anticipate and the ADR now carries as clause 4:
+"prefers the centre on an empty Board" is not something the search can deliver.
+Every opening draws under perfect play, so all nine Cells score 0 and the
+suggested lowest-index tie-break opens in the corner. Equal scores are
+therefore separated by a fixed preference — the centre, then the corners, then
+the edges — which only ever chooses among Cells the search has already proved
+equal, and can never cost a Move.
+
+Measured, because the ADR's cost claim needed a number: the never-loses
+property runs in **2.3–3.4 s** and the empty-Board example in **2.0–3.0 s**
+across repeated runs on this machine, and they are 99.9% of that spec file's
+time (whole suite: 129 examples in 5.3 s). Both walk the game tree rather than the
+5,478 reachable positions — roughly half a million nodes from an empty Board.
+Memoising the property's walk inside the spec was tried and made no difference
+(3.54 s → 3.60 s), so it was dropped: the cost is the nine eight-Cell searches,
+not repeated positions.
+
+Mutation: 1400 mutations, 29 alive, 28 timeouts, 97.92% coverage — against
+1228 / 29–30 / 97.55–97.63% on `main`. Every one of the 172 new mutations dies
+and the 29 survivors are all pre-existing. Getting there took a change to the
+spec, not to the code: mutant selects a subject's tests by the example group's
+description, so the never-loses property, sitting in its own top-level group,
+was never run against a mutation of `#call`, and the two mutants that move the
+search's root depth survived. Nested inside the `#call` group it is selected
+and both die. An enforcement clause the mutation run cannot reach enforces
+less than it claims to.
+
+`CLI.computer_strategy` now routes on the Difficulty rather than the Mode —
+no Difficulty means hot seat, which is the same absent Strategy the loop
+already understood — so the change stops at the routing and `play_game` is
+untouched.
