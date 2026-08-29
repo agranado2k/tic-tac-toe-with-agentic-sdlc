@@ -44,4 +44,4 @@ was never decided". If one grows consequential enough, promote it to an ADR and
 leave a back-reference in the diary entry.
 -->
 
-- _None yet._
+- **2026-08-29** — Mutation testing with `mutant-rspec`, run on demand and never as a gate (shared invariant §9). Free for open source (`usage: opensource` in `.mutant.yml`); the repo is public. Recorded in the diary entry of that date.

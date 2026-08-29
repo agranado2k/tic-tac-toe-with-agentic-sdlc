@@ -9,9 +9,7 @@ module TicTacToe
   # Tracer bullet: render the empty Board, take one Move for X, render again.
   # The full game loop arrives through the spec -> tickets -> /implement chain.
   module CLI
-    module_function
-
-    def run(prompt: TTY::Prompt.new, out: $stdout)
+    def self.run(prompt: TTY::Prompt.new, out: $stdout)
       board = Board.empty
       out.puts UI::Renderer.render(board)
 
@@ -22,7 +20,7 @@ module TicTacToe
       board
     end
 
-    def choices_for(board)
+    def self.choices_for(board)
       board.available_cells.to_h { |i| ["Cell #{i + 1}", i] }
     end
   end

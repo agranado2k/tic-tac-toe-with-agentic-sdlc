@@ -15,6 +15,8 @@ portable reasoning behind several of these rules is in `shared-invariants.md`.
   `lib/` one-to-one.
 - **Package / dependency manager**: Bundler — `Gemfile` and `Gemfile.lock`;
   run everything through `bundle exec`.
+- **Test tooling**: RSpec (`.rspec`), RuboCop (`.rubocop.yml`), and mutant
+  (`.mutant.yml`) for on-demand mutation testing — see the test tiers below.
 
 ## Style
 
@@ -28,7 +30,9 @@ portable reasoning behind several of these rules is in `shared-invariants.md`.
 - **No side effects in `lib/tic_tac_toe/board.rb` or any other core file** —
   push all I/O to the edges: `lib/tic_tac_toe/ui/` renders a value to a
   string, `lib/tic_tac_toe/cli.rb` prints it and reads the next input.
-- **Enforcement**: `bundle exec rubocop` fails the build. There is no type
+- **Enforcement**: `bundle exec rubocop` fails the build (inside a worktree too —
+  see the comment in `.rubocop.yml` on why the `worktree/` exclude is rooted at
+  the invocation directory). There is no type
   checker; the immutability rules above are enforced by review and by the
   specs that assert a value is frozen.
 
@@ -59,8 +63,16 @@ distinct signal; naming which one you ran is part of reporting a change.
 | Docs gate | `scripts/check.sh` | the manual layer still describes reality |
 | Gate self-tests | `scripts/docs-conformance/test/` | the gate itself can still fail |
 
-**Measuring a tier is not a tier** (shared invariant §9). No mutation-testing
-tool is wired yet; when one is, run it on demand, never as a gate.
+**Measuring a tier is not a tier** (shared invariant §9). `bundle exec mutant run`
+(mutant, configured in `.mutant.yml`) asks whether the first two rows' tests
+are load-bearing; run it on demand — before opening a PR — never as a gate.
+(`/review-pr` cites mutation evidence only through an adapter under
+`adapters/`; none is wired yet, so paste the run's survivors into the PR by
+hand until one is.) Surviving mutants are the objective form of
+"this test enforces nothing". Two things mutant cannot see, so the code avoids
+them: methods defined inside a `Data.define do … end` block (reopen the class
+instead) and `module_function` (use `def self.`). Held by review; nothing
+checks it — a value written the other way silently leaves mutant's subject set.
 
 ## Infrastructure
 

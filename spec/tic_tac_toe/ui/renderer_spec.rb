@@ -1,20 +1,49 @@
 # frozen_string_literal: true
 
 RSpec.describe TicTacToe::UI::Renderer do
-  let(:pastel) { Pastel.new(enabled: false) }
+  let(:plain) { Pastel.new(enabled: false) }
+  let(:colour) { Pastel.new(enabled: true) }
 
-  it "numbers empty cells 1..9" do
-    output = described_class.render(TicTacToe::Board.empty, pastel: pastel)
+  describe ".render" do
+    it "draws the numbered, framed board exactly" do
+      board = TicTacToe::Board.empty.place(4, :x).value!.place(0, :o).value!
 
-    expect(output).to include(" 1 ").and include(" 9 ")
+      expect(described_class.render(board, pastel: plain)).to eq(<<~BOARD)
+        ╔ Tic Tac Toe ══╗
+        ║   O │ 2 │ 3   ║
+        ║  ───┼───┼───  ║
+        ║   4 │ X │ 6   ║
+        ║  ───┼───┼───  ║
+        ║   7 │ 8 │ 9   ║
+        ╚═══════════════╝
+      BOARD
+    end
+
+    it "dims the cell separators and the row dividers" do
+      output = described_class.render(TicTacToe::Board.empty, pastel: colour)
+
+      expect(output).to include(colour.dim("│"))
+      expect(output).to include(colour.dim("───┼───┼───"))
+    end
+
+    it "renders without an injected Pastel" do
+      output = described_class.render(TicTacToe::Board.empty.place(0, :x).value!)
+
+      expect(output).to include(" X ").and include(" 2 ")
+    end
   end
 
-  it "draws placed marks in the right cell" do
-    board = TicTacToe::Board.empty.place(4, :x).value!.place(0, :o).value!
+  describe ".glyph" do
+    it "renders X bold cyan" do
+      expect(described_class.glyph(:x, 0, colour)).to eq(colour.bold.cyan(" X "))
+    end
 
-    output = described_class.render(board, pastel: pastel)
+    it "renders O bold magenta" do
+      expect(described_class.glyph(:o, 0, colour)).to eq(colour.bold.magenta(" O "))
+    end
 
-    expect(output).to include(" O ").and include(" X ")
-    expect(output).not_to include(" 5 ")
+    it "renders an empty cell as its dim 1-based number" do
+      expect(described_class.glyph(nil, 8, colour)).to eq(colour.dim(" 9 "))
+    end
   end
 end

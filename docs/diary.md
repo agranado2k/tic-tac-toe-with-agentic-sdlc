@@ -25,7 +25,7 @@ is in flight. Do not restate the README.
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` — created empty, never pushed yet |
 | **Last commit on `main`** | see `git log -1` — the stack scaffold on top of the bootstrap |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | None. |
+| **Active worktrees** | `worktree/mutation-testing` on `chore/mutation-testing` — mutant wired, tests hardened; awaiting PR + merge. |
 | **Spec status** | No spec yet. Next step is `/grill-me` for the full game (turns, win/draw detection, replay), then `/to-prd` → `/to-tickets`. |
 
 ### Open questions / unresolved decisions
@@ -122,3 +122,22 @@ Same day as the bootstrap. The stack was chosen and wired in one pass:
 
 Remote created on GitHub, deliberately not pushed — the first push is the
 owner's.
+
+### 2026-08-29 — Mutation testing wired; the first run measured the suite
+
+`mutant-rspec` 0.16.3 added (dev/test group, `.mutant.yml`, `usage: opensource`).
+The kit's bootstrap path never asks for this decision — reported upstream as
+agentic-sdlc issue #85.
+
+The first run reported 1.5% coverage: not weak tests, invisible code. Methods
+defined inside a `Data.define do … end` block are not subjects to mutant, and
+`module_function` methods are mutated on the instance copy while the tests call
+the singleton copy. `Board` is now reopened as a class after `Data.define`, and
+the shell modules use `def self.`. Second run: 81.8% with 89 survivors, which
+named the gaps — `full?` returning a truthy array, the untested `dup` in
+`Board.new`, `rows`/`winner` only exercised through the renderer, uncoloured
+glyphs, the default `Pastel.new`. Specs added for each.
+
+Also found: RuboCop reads `AllCops/Exclude` from the topmost `.rubocop.yml`, so
+the root `worktree/**/*` exclude made it inspect 0 files inside a worktree. The
+pattern is now rooted at `Dir.pwd`.

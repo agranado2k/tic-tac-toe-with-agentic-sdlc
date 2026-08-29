@@ -4,7 +4,15 @@ AllCops:
   SuggestExtensions: false
   Exclude:
     - "vendor/**/*"
-    - "worktree/**/*"
+    # RuboCop reads AllCops/Exclude from the TOPMOST .rubocop.yml it finds, so a
+    # plain "worktree/**/*" here would also exclude every file of every git
+    # worktree under worktree/<slug> (AGENTS.md hard rule 1). Rooting the pattern
+    # at the working directory excludes the worktrees only when run from the
+    # root checkout. RuboCop::PathUtil.pwd is the invocation directory,
+    # memoised before RuboCop chdirs into this file's directory to evaluate
+    # the ERB (so Dir.pwd here is always the root, and $PWD can be unset or
+    # stale). Emitted as JSON so a path with quotes cannot break the YAML.
+    - <%= "#{RuboCop::PathUtil.pwd}/worktree/**/*".to_json %>
 
 Style/Documentation:
   Enabled: false
