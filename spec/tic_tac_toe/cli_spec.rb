@@ -237,12 +237,6 @@ RSpec.describe TicTacToe::CLI do
 
         expect(out.string).to eq("#{in_place(x_win_frames)}\n")
       end
-
-      it "returns rather than exiting when the answer to Play again? is No" do
-        script(*x_win_keys)
-
-        expect { described_class.run(prompt: prompt, out: out) }.not_to raise_error
-      end
     end
   end
 

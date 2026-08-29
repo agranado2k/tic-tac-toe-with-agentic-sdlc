@@ -303,11 +303,12 @@ core is untouched, and so is `bin/tic-tac-toe` — the exit lives in the Shell s
 that a spec can observe the status (`SystemExit#status`) without the process
 dying, which is what ticket #9 asked for.
 
-`spec/bin/tic_tac_toe_spec.rb` is a new file and, in practice, a new test tier:
-the binary driven through a real pseudo-terminal (`PTY.spawn`, with the Ctrl-C
-byte `0x03` written to it), asserting `exitstatus == 130` and that nothing
-matching a backtrace line reaches the screen. It costs about a third of a second
-and was red against `main` on both examples.
+The binary itself stays un-automated, as PRD #2 decided ("exercised by
+`/dogfood`, not by an automated tier"): the review of PR #13 caught a
+pseudo-terminal spec of `bin/tic-tac-toe` that this branch had added against
+that decision, and it was removed. The pty run (`PTY.spawn`, Ctrl-C byte
+`0x03`, `exitstatus == 130`, no backtrace on screen) lives on as the PR's demo
+evidence and as the by-hand check the ticket asked for.
 
 Mutation: 1017 mutations, 27 alive, 21 timeouts, 97.34% coverage — against 998 /
 27 / 21 / 97.29% on `main` with the branch stashed. Every one of the 19 new
