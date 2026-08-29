@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | Hot-seat game with number-key input (1–9), re-ask on a bad key or taken Cell, and a status line inside the frame. Still print-per-move. Next: ticket #6 (redraw in place + Play again?). |
+| **Phase** | Hot-seat game with number-key input (1–9), re-ask on a bad key or taken Cell, a status line inside the frame, one frame repainted in place per game, and "Play again?" at the end. Next: ticket #7 (versus-computer Mode with the Random Strategy). |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
 | **Last commit on `main`** | `85646c2` — PR #11 squash: number-key input with re-ask and a status line (ticket #5) |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | None. |
-| **Spec status** | PRD #2 → tickets #4–#9. #4 (PR #10) and #5 (PR #11) landed; #6 is the frontier, then #7 → #8, with #9 off #6. |
+| **Active worktrees** | `worktree/redraw-and-replay` (`feat/redraw-and-replay`, ticket #6) — open PR. |
+| **Spec status** | PRD #2 → tickets #4–#9. #4 (PR #10) and #5 (PR #11) landed; #6 is in review; then #7 → #8, with #9 off #6. |
 
 ### Open questions / unresolved decisions
 
@@ -235,3 +235,38 @@ of the play-a-Game reduce became one `game_after` spec helper, and
 frame, status styling, silent keypress prompt, wording, the product-article
 prerequisite) stay on the PR for the owner. Merged under the standing
 "merge-train after each ticket" authorization for this run.
+
+### 2026-08-29 — One frame per game: redraw in place, and "Play again?"
+
+Ticket #6 (`feat/redraw-and-replay`). The terminal now shows one game rather
+than a scrolling log of frames. The Shell keeps the frame it last wrote and,
+before every repaint, emits `TTY::Cursor.up(<frame height>) + column(1) +
+clear_screen_down` over it — the use ADR-0002 §2 already reserved `tty-cursor`
+for, so no new ADR. The Renderer is unchanged: still a pure Board-plus-status
+to `String` function, and still the only thing that knows what a frame looks
+like. The fixed 28-column, 9-line frame that ticket #5 built for exactly this
+is what makes the arithmetic (`frame.lines.count`) safe.
+
+`CLI.run` became a loop over Games: `play_game` runs one Game to its Outcome,
+then `replay?` asks the Prompt's `yes?` — "Play again?" — exactly once per
+finished Game. Yes starts a fresh `Game.new_game` (the whole of "the same
+settings" while hot seat is the only Mode; `Game.new_game` was left alone, as
+PR #10's confirm-list item 6 asked) drawn as a new frame below the question,
+because the question is written by the Prompt to its own stream and its height
+is not ours to count. No returns the finished Game with the final frame on
+screen.
+
+One behaviour change the ticket did not name: a Game abandoned when the input
+stream closes is no longer repainted with a statusless frame. That frame is two
+lines shorter than the others, and a frame that changes height cannot be redrawn
+in place. It also gets no "Play again?" — it never finished.
+
+Glossary gained **Frame** and **Replay**; **Prompt** and **Shell** were widened
+to name the yes/no answer and the cursor sequences. `constitution/local-product.md`
+records the yes/no prompt in the surface prerequisites and states the redraw as
+a dogfood tell: a second board below the first is a fault.
+
+Mutation: 27 alive / 18 timeouts / 97.35% coverage over 1019 mutations, against
+23 alive / 11 timeouts / 97.35% over 869 on `main`. All four new survivors are
+in `CLI.rewind_over` and all four are equivalent — `Array#count`/`length`/`size`
+on the same array, and `TTY::Cursor.column(1)` versus its default argument.

@@ -82,10 +82,22 @@ page of explanation, that page is an ADR and the entry points at it.
   resizes the frame; derived per Move by the Shell, never stored.
   Ref: ADR-0002, PRD #2.
   - _Avoid_: "message", "prompt", "banner" (a Prompt is the input adapter).
+- **Frame** — the block of text one call to `Renderer.render` returns: the
+  bordered Board with the Status line beneath it. Fixed in width and height by
+  `STATUS_WIDTH`, which is what lets the Shell repaint it in place over its
+  predecessor instead of printing a new one below. Ref: ADR-0002, PRD #2.
+  - _Avoid_: "screen", "box", "window".
 - **Prompt** — the `TTY::Prompt` that reads the player's single keypress, `1`–`9`
-  for the Cell of that number. Adapter (in). Ref: ADR-0002.
-- **Shell** — `TicTacToe::CLI`, the only place that prints and reads.
-  Ref: ADR-0001.
+  for the Cell of that number, and the yes/no answer to "Play again?".
+  Adapter (in). Ref: ADR-0002.
+- **Replay** — a fresh Game started after a finished one, on the player
+  answering yes to the Prompt's "Play again?". It carries the Shell's settings
+  forward; hot seat is the only Mode today, so a Replay is `Game.new_game`.
+  Ref: PRD #2.
+  - _Avoid_: "restart", "rematch", "round", "new session".
+- **Shell** — `TicTacToe::CLI`, the only place that prints and reads. It owns
+  the cursor sequences that repaint the Frame in place; the Renderer never
+  emits one. Ref: ADR-0001, ADR-0002.
 
 ---
 

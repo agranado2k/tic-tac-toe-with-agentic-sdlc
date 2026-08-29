@@ -9,11 +9,13 @@ Project-specific elaboration of the root `AGENTS.md`. Read it before running
 
 | Surface | What it is | How to bring it up | Notes / prerequisites |
 | --- | --- | --- | --- |
-| Terminal game | CLI binary, interactive, in the developer's own terminal | `bundle exec bin/tic-tac-toe` | Ruby per `.ruby-version` (rbenv) and `bundle install` once. Needs a real TTY: the prompt reads a single keypress, `1`–`9` |
+| Terminal game | CLI binary, interactive, in the developer's own terminal | `bundle exec bin/tic-tac-toe` | Ruby per `.ruby-version` (rbenv) and `bundle install` once. Needs a real TTY: the prompt reads a single keypress, `1`–`9`, and a yes/no answer to "Play again?" at the end |
 
 **Ready means reachable, not started.** The framed board is on screen and a
 prompt is waiting for a key — that is how you know the surface is up; a process
-that has spawned is not a product that answers.
+that has spawned is not a product that answers. There is one frame per game and
+it repaints where it stands, so a second board appearing below the first is a
+fault, not progress.
 
 ### PERSONAS — who is trying to do what
 
