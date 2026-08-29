@@ -8,8 +8,11 @@ AllCops:
     # plain "worktree/**/*" here would also exclude every file of every git
     # worktree under worktree/<slug> (AGENTS.md hard rule 1). Rooting the pattern
     # at the working directory excludes the worktrees only when run from the
-    # root checkout.
-    - "<%= ENV.fetch("PWD", Dir.pwd) %>/worktree/**/*"
+    # root checkout. ENV["PWD"] rather than Dir.pwd on purpose: RuboCop
+    # evaluates this file with the process cwd set to the config's own
+    # directory, so Dir.pwd is always the root and would re-swallow the
+    # worktrees (verified; see docs/diary.md, 2026-08-29).
+    - "<%= ENV.fetch("PWD") { Dir.pwd } %>/worktree/**/*"
 
 Style/Documentation:
   Enabled: false

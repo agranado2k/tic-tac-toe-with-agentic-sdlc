@@ -15,6 +15,8 @@ portable reasoning behind several of these rules is in `shared-invariants.md`.
   `lib/` one-to-one.
 - **Package / dependency manager**: Bundler — `Gemfile` and `Gemfile.lock`;
   run everything through `bundle exec`.
+- **Test tooling**: RSpec (`.rspec`), RuboCop (`.rubocop.yml`), and mutant
+  (`.mutant.yml`) for on-demand mutation testing — see the test tiers below.
 
 ## Style
 
