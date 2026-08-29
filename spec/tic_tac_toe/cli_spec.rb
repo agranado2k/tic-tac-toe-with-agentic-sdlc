@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "stringio"
-require "tty-cursor"
 
 RSpec.describe TicTacToe::CLI do
   describe ".run" do
@@ -31,19 +30,30 @@ RSpec.describe TicTacToe::CLI do
       asking + [renderer.render(games.last.board, status: "X wins")]
     end
 
-    # The bytes that put the cursor back at the top-left of a frame just
-    # written and clear from there down, so the next frame lands on top of it.
-    def rewind_over(frame)
-      TTY::Cursor.up(frame.lines.count) + TTY::Cursor.column(1) + TTY::Cursor.clear_screen_down
+    # The literal bytes that put the cursor back at the top-left of the
+    # nine-line frame just written and clear from there down: up 9, column 1,
+    # clear to the end of the screen.
+    def rewind
+      "\e[9A\e[1G\e[J"
     end
 
     # The byte stream of a sequence of frames all drawn in one place: the first
-    # printed, every one after it preceded by a rewind over its predecessor.
+    # printed, every one after it preceded by the rewind.
     def in_place(frames)
-      frames.each_cons(2).map { |previous, frame| rewind_over(previous) + frame }.unshift(frames.first).join
+      frames.join(rewind)
     end
 
-    it "repaints in place: the frame after the first is preceded by a rewind over it" do
+    it "rewinds over a nine-line frame with exactly: up 9, column 1, clear down" do
+      script("5", nil)
+
+      described_class.run(prompt: prompt, out: out)
+
+      first = TicTacToe::UI::Renderer.render(TicTacToe::Board.empty, status: "X to move")
+      expect(first.lines.count).to eq(9)
+      expect(out.string).to start_with(first + rewind)
+    end
+
+    it "repaints in place: the frame after the first lands where it was" do
       script("5", nil)
 
       described_class.run(prompt: prompt, out: out)
@@ -143,19 +153,26 @@ RSpec.describe TicTacToe::CLI do
 
       expect(prompt).to have_received(:yes?).with("Play again?").once
       expect(game.outcome).to eq(TicTacToe::Outcome.won(:x))
-      expect(out.string).to end_with(x_win_frames.last)
     end
 
-    it "plays a fresh Game below the last frame when the answer is yes, and asks again after it" do
+    it "starts a Replay as a fresh Game below the finished frame when the answer is yes" do
       script(*(x_win_keys * 2))
       allow(prompt).to receive(:yes?).and_return(true, false)
 
       game = described_class.run(prompt: prompt, out: out)
 
-      expect(prompt).to have_received(:keypress).exactly(10).times
-      expect(prompt).to have_received(:yes?).twice
       expect(game).to eq(game_after(0, 3, 1, 4, 2))
       expect(out.string).to eq(in_place(x_win_frames) * 2)
+    end
+
+    it "asks Play again? once per finished Game" do
+      script(*(x_win_keys * 2))
+      allow(prompt).to receive(:yes?).and_return(true, false)
+
+      described_class.run(prompt: prompt, out: out)
+
+      expect(prompt).to have_received(:keypress).exactly(10).times
+      expect(prompt).to have_received(:yes?).twice
     end
 
     it "does not offer Play again? for a Game abandoned when the input stream closed" do
