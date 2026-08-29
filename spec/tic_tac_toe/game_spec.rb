@@ -7,6 +7,10 @@ RSpec.describe TicTacToe::Game do
     cells.reduce(game) { |g, cell| g.play(cell).value! }
   end
 
+  it "passes the go through every Mark the Board knows, in order" do
+    expect(TicTacToe::Game::NEXT_MARK).to eq(x: :o, o: :x)
+  end
+
   describe ".new_game" do
     it "starts on an empty Board with X as the current Mark" do
       expect(game.board).to eq(TicTacToe::Board.empty)

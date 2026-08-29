@@ -10,7 +10,8 @@ module TicTacToe
   class Game
     include Dry::Monads[:result]
 
-    NEXT_MARK = { x: :o, o: :x }.freeze
+    # Each Mark hands the go to the next one in Board::MARKS, wrapping round.
+    NEXT_MARK = Board::MARKS.zip(Board::MARKS.rotate).to_h.freeze
 
     def self.new_game
       new(board: Board.empty, current_mark: :x)
