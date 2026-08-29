@@ -28,7 +28,9 @@ portable reasoning behind several of these rules is in `shared-invariants.md`.
 - **No side effects in `lib/tic_tac_toe/board.rb` or any other core file** —
   push all I/O to the edges: `lib/tic_tac_toe/ui/` renders a value to a
   string, `lib/tic_tac_toe/cli.rb` prints it and reads the next input.
-- **Enforcement**: `bundle exec rubocop` fails the build. There is no type
+- **Enforcement**: `bundle exec rubocop` fails the build (inside a worktree too —
+  see the comment in `.rubocop.yml` on why the `worktree/` exclude is rooted at
+  the working directory). There is no type
   checker; the immutability rules above are enforced by review and by the
   specs that assert a value is frozen.
 
@@ -59,8 +61,13 @@ distinct signal; naming which one you ran is part of reporting a change.
 | Docs gate | `scripts/check.sh` | the manual layer still describes reality |
 | Gate self-tests | `scripts/docs-conformance/test/` | the gate itself can still fail |
 
-**Measuring a tier is not a tier** (shared invariant §9). No mutation-testing
-tool is wired yet; when one is, run it on demand, never as a gate.
+**Measuring a tier is not a tier** (shared invariant §9). `bundle exec mutant run`
+(mutant, configured in `.mutant.yml`) asks whether the first two rows' tests
+are load-bearing; run it on demand — before opening a PR, and in `/review-pr`
+as evidence — never as a gate. Surviving mutants are the objective form of
+"this test enforces nothing". Two things mutant cannot see, so the code avoids
+them: methods defined inside a `Data.define do … end` block (reopen the class
+instead) and `module_function` (use `def self.`).
 
 ## Infrastructure
 

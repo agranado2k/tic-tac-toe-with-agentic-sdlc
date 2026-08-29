@@ -20,6 +20,7 @@ bundle exec bin/tic-tac-toe
 # Check
 bundle exec rspec
 bundle exec rubocop
+bundle exec mutant run   # mutation testing, on demand
 
 # Clone-time wiring: the git hooks. Hook path is per-clone config and cannot
 # be committed, so every collaborator runs this once.

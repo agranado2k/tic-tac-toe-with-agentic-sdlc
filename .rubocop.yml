@@ -4,7 +4,12 @@ AllCops:
   SuggestExtensions: false
   Exclude:
     - "vendor/**/*"
-    - "worktree/**/*"
+    # RuboCop reads AllCops/Exclude from the TOPMOST .rubocop.yml it finds, so a
+    # plain "worktree/**/*" here would also exclude every file of every git
+    # worktree under worktree/<slug> (AGENTS.md hard rule 1). Rooting the pattern
+    # at the working directory excludes the worktrees only when run from the
+    # root checkout.
+    - "<%= ENV.fetch("PWD", Dir.pwd) %>/worktree/**/*"
 
 Style/Documentation:
   Enabled: false

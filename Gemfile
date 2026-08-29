@@ -15,6 +15,8 @@ gem "tty-prompt", "~> 0.23"
 gem "tty-screen", "~> 0.8"
 
 group :development, :test do
+  # Mutation testing, run on demand (never a gate): `bundle exec mutant run`.
+  gem "mutant-rspec", "~> 0.16", require: false
   gem "rspec", "~> 3.13"
   gem "rubocop", "~> 1.90", require: false
 end

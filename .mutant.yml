@@ -1,0 +1,15 @@
+# mutant — mutation testing, on demand. Free for open-source use (this repo is
+# public); see `constitution/local-engineering.md` for when to run it.
+usage: opensource
+integration:
+  name: rspec
+includes:
+  - lib
+requires:
+  - tic_tac_toe
+matcher:
+  subjects:
+    - TicTacToe*
+coverage_criteria:
+  process_abort: true
+  timeout: true
