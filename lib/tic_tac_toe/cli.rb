@@ -20,17 +20,14 @@ module TicTacToe
     # The question a finished Game ends on.
     PLAY_AGAIN = "Play again?"
 
+    # A Replay is offered by a finished Game only, and asked exactly once. It
+    # restarts with the settings this loop carries; today hot seat is the only
+    # Mode, so a fresh Game is the whole of "the same settings".
     def self.run(prompt: TTY::Prompt.new, out: $stdout)
-      game = play_game(prompt, out)
-      game = play_game(prompt, out) while replay?(prompt, game)
-      game
-    end
-
-    # A rematch is offered by a finished Game only, and asked exactly once.
-    # It restarts with the settings this loop carries; today hot seat is the
-    # only Mode, so a fresh Game is the whole of "the same settings".
-    def self.replay?(prompt, game)
-      game.outcome.terminal? && prompt.yes?(PLAY_AGAIN)
+      loop do
+        game = play_game(prompt, out)
+        break game unless game.outcome.terminal? && prompt.yes?(PLAY_AGAIN)
+      end
     end
 
     # One Game, drawn into a single frame that is repainted in place after
@@ -48,16 +45,15 @@ module TicTacToe
         game, status = advance(game, key)
       end
 
-      game.tap { announce(out, frame, game) }
+      finish(out, frame, game)
     end
 
-    # The last repaint of a finished Game: the announcement in its status line.
-    # Only a finished Game has one, so an abandoned Game (the input stream
-    # closed) keeps the frame it last drew instead of losing its status line.
-    def self.announce(out, frame, game)
-      return unless game.outcome.terminal?
-
-      repaint(out, frame, game.board, UI::Renderer.announcement(game.outcome))
+    # Only a finished Game has an announcement to repaint, so an abandoned one
+    # (the input stream closed) keeps the frame it last drew instead of losing
+    # its status line.
+    def self.finish(out, frame, game)
+      repaint(out, frame, game.board, UI::Renderer.announcement(game.outcome)) if game.outcome.terminal?
+      game
     end
 
     # Draw one frame where the previous one is, and answer with it: the first
