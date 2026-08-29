@@ -20,13 +20,13 @@ is in flight. Do not restate the README.
 
 | Field | Value |
 | --- | --- |
-| **Phase** | Hot-seat game landed (`Game`, `Outcome`, the shell loop). Ticket #5 — number-key input and the status line — is in review on `feat/number-key-input`. Still print-per-move; redraw in place is ticket #6. |
+| **Phase** | Hot-seat game with number-key input (1–9), re-ask on a bad key or taken Cell, and a status line inside the frame. Still print-per-move. Next: ticket #6 (redraw in place + Play again?). |
 | **Repo** | `~/PetProjects/tic-tac-toe-with-agentic-sdlc` (`main`). Feature work happens in `worktree/<slug>` on a `<type>/<slug>` branch. |
 | **Remote** | `git@github.com:agranado2k/tic-tac-toe-with-agentic-sdlc.git` |
-| **Last commit on `main`** | `0939fbb` — PR #10 squash: hot-seat game to a Winner or a draw (ticket #4) |
+| **Last commit on `main`** | `85646c2` — PR #11 squash: number-key input with re-ask and a status line (ticket #5) |
 | **Deployed / live** | Nothing yet. |
-| **Active worktrees** | `worktree/number-key-input` (`feat/number-key-input`, ticket #5). |
-| **Spec status** | PRD #2 decomposed into tickets #4–#9 (chain #4→#5→#6→#7→#8, #9 off #6). #4 landed as PR #10; #5 is open for review; #6 is next. |
+| **Active worktrees** | None. |
+| **Spec status** | PRD #2 → tickets #4–#9. #4 (PR #10) and #5 (PR #11) landed; #6 is the frontier, then #7 → #8, with #9 off #6. |
 
 ### Open questions / unresolved decisions
 
@@ -222,3 +222,16 @@ which is what a piped or closed stdin gives), `advance` treats `nil` as "not a
 Cell" and the loop re-asks forever. Harmless against a real TTY, where
 `keypress` blocks; recorded as a behaviour finding on the PR, and the natural
 home for the fix is ticket #6/#9's Ctrl-C and quit handling.
+
+### 2026-08-29 — Ticket #5 landed (PR #11)
+
+`/pr-iterate 11` applied all six review findings: the loop now leaves when
+the input stream is closed (`keypress` returns `nil` — it re-asked forever
+before, reproducible with `< /dev/null`), a refused Move is reported by its
+reason instead of always "Cell N is taken", ADR-0002 carries a dated
+amendment narrowing the input clause to a single keypress, the three copies
+of the play-a-Game reduce became one `game_after` spec helper, and
+`Renderer.rows` became `grid`. Five behaviour questions (fixed 28-column
+frame, status styling, silent keypress prompt, wording, the product-article
+prerequisite) stay on the PR for the owner. Merged under the standing
+"merge-train after each ticket" authorization for this run.
