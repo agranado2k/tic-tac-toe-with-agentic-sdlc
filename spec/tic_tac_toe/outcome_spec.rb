@@ -15,6 +15,10 @@ RSpec.describe TicTacToe::Outcome do
       expect(described_class.in_progress).to have_attributes(kind: :in_progress, mark: nil)
     end
 
+    it "are the only kinds that can be constructed" do
+      expect { described_class.new(kind: :abandoned, mark: nil) }.to raise_error(ArgumentError, /abandoned/)
+    end
+
     it "are distinct values" do
       outcomes = [described_class.won(:x), described_class.won(:o), described_class.draw, described_class.in_progress]
 

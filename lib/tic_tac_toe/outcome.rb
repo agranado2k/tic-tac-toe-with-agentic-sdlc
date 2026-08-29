@@ -6,6 +6,16 @@ module TicTacToe
   Outcome = Data.define(:kind, :mark)
 
   class Outcome
+    KINDS = %i[won draw in_progress].freeze
+
+    # The three constructors below are the intended entry points; an unknown
+    # kind is a programming error, not an expected outcome.
+    def initialize(kind:, mark:)
+      raise ArgumentError, "unknown Outcome kind #{kind.inspect}" unless KINDS.include?(kind)
+
+      super
+    end
+
     def self.won(mark)
       new(kind: :won, mark: mark)
     end
