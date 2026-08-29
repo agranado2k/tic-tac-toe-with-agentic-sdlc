@@ -67,3 +67,9 @@ Chosen: **the TTY toolkit**.
 
 - Implemented in: the bootstrap commit's `lib/tic_tac_toe/ui/renderer.rb` and `lib/tic_tac_toe/cli.rb`
 - Related: ADR-0001, `constitution/local-product.md`
+- **Amendment 2026-08-29 (ticket #5, PR #11)** — narrows the input clause
+  without changing the decision: a Cell is chosen with a single keypress
+  `1`–`9` through `tty-prompt`'s keypress reader, not an arrow-key selection
+  list. The context paragraph's "reacts to arrow keys" and option 3's "no
+  arrow-key selection" describe the tracer bullet as it stood when this was
+  written; the toolkit choice is unchanged (PRD #2, "Cell input").
